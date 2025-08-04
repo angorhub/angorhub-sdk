@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AngorHub SDK - Minimal Example</title>
+</head>
+<body>
+    <h1>AngorHub SDK Minimal Test</h1>
+    <button id="loadBtn">Load Projects</button>
+    <pre id="output">Click to load projects...</pre>
+    
+    <!-- Include axios first -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    
+    <!-- Include SDK bundle -->
+    <script src="../dist/browser/angorhub-sdk.bundle.js"></script>
+    
+    <script>
+        // Log available global objects
+        console.log('Window global objects:', Object.keys(window).filter(key => key.includes('Angor')));
+        console.log('AngorHub available:', typeof AngorHub);
+        console.log('AngorHubSDK available:', typeof AngorHubSDK);
+        
+        document.getElementById('loadBtn').addEventListener('click', async function() {
+            const output = document.getElementById('output');
+            output.textContent = 'Loading...';
+            
+            try {
+                // Try different ways to access the SDK
+                let sdk;
+                
+                // Option 1: Check for AngorHub namespace (new config)
+                if (typeof AngorHub === 'object') {
+                    if (typeof AngorHub.AngorHubSDK === 'function') {
+                        sdk = new AngorHub.AngorHubSDK('mainnet');
+                        console.log('Created SDK using AngorHub.AngorHubSDK');
+                    }
+                    else {
+                        console.log('AngorHub exists but AngorHubSDK constructor not found');
+                    }
+                }
+                // Option 2: Check for AngorHubSDK namespace (old config)
+                else if (typeof AngorHubSDK === 'object') {
+                    if (typeof AngorHubSDK.AngorHubSDK === 'function') {
+                        sdk = new AngorHubSDK.AngorHubSDK('mainnet');
+                        console.log('Created SDK using AngorHubSDK.AngorHubSDK');
+                    } 
+                    else if (typeof AngorHubSDK.default === 'function') {
+                        sdk = new AngorHubSDK.default('mainnet');
+                        console.log('Created SDK using AngorHubSDK.default');
+                    }
+                    else {
+                        console.error('Cannot find SDK constructor in AngorHubSDK object:', AngorHubSDK);
+                        output.textContent = 'Error: SDK constructor not found';
+                        return;
+                    }
+                }
+                // No known namespace found
+                else {
+                    output.textContent = 'Error: SDK not available';
+                    console.error('SDK not found in global scope');
+                    return;
+                }
+                
+                // Use the SDK
+                const projects = await sdk.getProjects(3, 0);
+                output.textContent = JSON.stringify(projects, null, 2);
+            } catch (error) {
+                output.textContent = 'Error: ' + error.message;
+                console.error('Error using SDK:', error);
+            }
+        });
+    </script>
+</body>
+</html>

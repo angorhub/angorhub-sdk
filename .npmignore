@@ -1,0 +1,45 @@
+# Dependency directories
+node_modules/
+
+# Source files
+src/
+
+# Test files
+tests/
+**/*.test.ts
+**/*.spec.ts
+
+# Build configuration
+tsconfig*.json
+rollup.config.js
+webpack.config.js
+.babelrc
+jest.config.js
+
+# Examples and demo
+examples/
+demo/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Editor configs
+.vscode/
+.idea/
+*.sublime-*
+.editorconfig
+
+# Misc
+.DS_Store
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.git
+.gitignore

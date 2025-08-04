@@ -1,0 +1,39 @@
+{
+  "name": "angorhub-sdk",
+  "version": "1.0.0",
+  "description": "SDK for interacting with AngorHub API",
+  "main": "dist/cjs/angorhub-sdk.cjs.js",
+  "module": "dist/esm/angorhub-sdk.esm.js",
+  "browser": "dist/browser/angorhub-sdk.bundle.js",
+  "types": "dist/esm/types/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/esm/angorhub-sdk.esm.js",
+      "require": "./dist/cjs/angorhub-sdk.cjs.js",
+      "browser": "./dist/browser/angorhub-sdk.bundle.js",
+      "types": "./dist/esm/types/index.d.ts"
+    }
+  },
+  "author": "AngorHub Team",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/angorhub/angorhub-sdk.git"
+  },
+  "keywords": [
+    "angorhub",
+    "sdk",
+    "api",
+    "bitcoin"
+  ],
+  "bugs": {
+    "url": "https://github.com/angorhub/angorhub-sdk/issues"
+  },
+  "homepage": "https://github.com/angorhub/angorhub-sdk#readme",
+  "dependencies": {
+    "axios": "^1.11.0"
+  }
+}

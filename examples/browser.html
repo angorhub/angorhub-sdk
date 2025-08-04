@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AngorHub SDK - Complete Example</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .section {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      background-color: #f9f9f9;
+    }
+    .section h3 {
+      margin-top: 0;
+      color: #333;
+      border-bottom: 2px solid #4a6fa5;
+      padding-bottom: 10px;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 15px;
+      align-items: center;
+    }
+    input, select, button {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    button {
+      background-color: #4a6fa5;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #3a5a95;
+    }
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 15px;
+      border-radius: 5px;
+      white-space: pre-wrap;
+      max-height: 400px;
+      overflow-y: auto;
+      font-size: 12px;
+      border: 1px solid #ddd;
+    }
+    label {
+      font-weight: bold;
+      margin-right: 5px;
+    }
+    .input-group {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .status {
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      font-weight: bold;
+    }
+    .status.success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .status.error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .status.loading {
+      background-color: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    .status[style*="display: none"] {
+      display: none !important;
+    }
+    .wide-input {
+      min-width: 300px;
+    }
+    .extra-wide-input {
+      min-width: 400px;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>AngorHub SDK - Complete Example</h1>
+  
+  <!-- Network Configuration -->
+  <div class="section">
+    <h3>🌐 Network Configuration</h3>
+    <div class="controls">
+      <div class="input-group">
+        <label for="network">Network:</label>
+        <select id="network">
+          <option value="mainnet" selected>Mainnet</option>
+          <option value="testnet">Testnet</option>
+        </select>
+      </div>
+      <button id="getConfigInfo">Get Config Info</button>
+    </div>
+    <div id="configStatus" class="status hidden"></div>
+    <pre id="configResult">SDK configuration will appear here...</pre>
+  </div>
+
+  <!-- Projects Management -->
+  <div class="section">
+    <h3>📋 Projects Management</h3>
+    <div class="controls">
+      <div class="input-group">
+        <label for="projectsLimit">Limit:</label>
+        <input type="number" id="projectsLimit" value="10" min="1" max="100">
+      </div>
+      <div class="input-group">
+        <label for="projectsOffset">Offset:</label>
+        <input type="number" id="projectsOffset" value="0" min="0">
+      </div>
+      <button id="getProjects">Get Projects</button>
+    </div>
+    <div id="projectsStatus" class="status hidden"></div>
+    <pre id="projectsResult">Click "Get Projects" to fetch projects list...</pre>
+  </div>
+
+  <!-- Single Project Details -->
+  <div class="section">
+    <h3>🔍 Project Details</h3>
+    <div class="controls">
+      <div class="input-group">
+        <label for="projectId">Project ID:</label>
+        <input type="text" id="projectId" placeholder="Enter project identifier" class="wide-input">
+      </div>
+      <button id="getProject">Get Project Details</button>
+      <button id="getProjectStats">Get Project Stats</button>
+    </div>
+    <div id="projectStatus" class="status hidden"></div>
+    <pre id="projectResult">Enter a project ID and click a button to fetch details...</pre>
+  </div>
+
+  <!-- Project Investments -->
+  <div class="section">
+    <h3>💰 Project Investments</h3>
+    <div class="controls">
+      <div class="input-group">
+        <label for="investmentProjectId">Project ID:</label>
+        <input type="text" id="investmentProjectId" placeholder="Enter project identifier" class="wide-input">
+      </div>
+      <div class="input-group">
+        <label for="investmentsLimit">Limit:</label>
+        <input type="number" id="investmentsLimit" value="10" min="1" max="100">
+      </div>
+      <div class="input-group">
+        <label for="investmentsOffset">Offset:</label>
+        <input type="number" id="investmentsOffset" value="0" min="0">
+      </div>
+      <button id="getProjectInvestments">Get Investments</button>
+    </div>
+    <div id="investmentsStatus" class="status hidden"></div>
+    <pre id="investmentsResult">Enter project ID and click "Get Investments" to fetch investment data...</pre>
+  </div>
+
+  <!-- Specific Investor Investment -->
+  <div class="section">
+    <h3>👤 Investor Investment</h3>
+    <div class="controls">
+      <div class="input-group">
+        <label for="investorProjectId">Project ID:</label>
+        <input type="text" id="investorProjectId" placeholder="Enter project identifier" class="wide-input">
+      </div>
+      <div class="input-group">
+        <label for="investorPublicKey">Investor Public Key:</label>
+        <input type="text" id="investorPublicKey" placeholder="Enter investor public key" class="extra-wide-input">
+      </div>
+      <button id="getInvestorInvestment">Get Investor Investment</button>
+    </div>
+    <div id="investorStatus" class="status hidden"></div>
+    <pre id="investorResult">Enter project ID and investor public key to fetch specific investment...</pre>
+  </div>
+  
+  <!-- Import Axios -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  
+  <!-- Import AngorHub SDK bundle -->
+  <script src="../dist/browser/angorhub-sdk.bundle.js"></script>
+  
+  <script>
+    let sdk = null;
+    
+    // Initialize SDK
+    function initializeSDK() {
+      const network = document.getElementById('network').value;
+      try {
+        // SDK is exported as AngorHubSDK.AngorHubSDK
+        sdk = new AngorHubSDK.AngorHubSDK(network);
+        return true;
+      } catch (error) {
+        console.error('Failed to initialize SDK:', error);
+        return false;
+      }
+    }
+    
+    // Utility functions for UI feedback
+    function showStatus(elementId, message, type = 'loading') {
+      const statusElement = document.getElementById(elementId);
+      statusElement.className = `status ${type}`;
+      statusElement.textContent = message;
+      statusElement.classList.remove('hidden');
+    }
+    
+    function hideStatus(elementId) {
+      document.getElementById(elementId).classList.add('hidden');
+    }
+    
+    function displayResult(elementId, data) {
+      document.getElementById(elementId).textContent = JSON.stringify(data, null, 2);
+    }
+    
+    function displayError(statusId, resultId, error) {
+      showStatus(statusId, `Error: ${error.message}`, 'error');
+      document.getElementById(resultId).textContent = `Error: ${error.message}`;
+    }
+    
+    // Network change handler
+    document.getElementById('network').addEventListener('change', function() {
+      initializeSDK();
+    });
+    
+    // Get Config Info
+    document.getElementById('getConfigInfo').addEventListener('click', function() {
+      showStatus('configStatus', 'Getting configuration info...', 'loading');
+      
+      try {
+        if (!initializeSDK()) {
+          throw new Error('Failed to initialize SDK');
+        }
+        
+        const configInfo = sdk.getConfigInfo();
+        showStatus('configStatus', 'Configuration retrieved successfully!', 'success');
+        displayResult('configResult', configInfo);
+      } catch (error) {
+        displayError('configStatus', 'configResult', error);
+      }
+    });
+    
+    // Get Projects
+    document.getElementById('getProjects').addEventListener('click', async function() {
+      const limit = parseInt(document.getElementById('projectsLimit').value) || 10;
+      const offset = parseInt(document.getElementById('projectsOffset').value) || 0;
+      
+      showStatus('projectsStatus', 'Fetching projects...', 'loading');
+      
+      try {
+        if (!initializeSDK()) {
+          throw new Error('Failed to initialize SDK');
+        }
+        
+        const projects = await sdk.getProjects(limit, offset);
+        showStatus('projectsStatus', `Retrieved ${projects.length} projects successfully!`, 'success');
+        displayResult('projectsResult', projects);
+      } catch (error) {
+        displayError('projectsStatus', 'projectsResult', error);
+      }
+    });
+    
+    // Get Project Details
+    document.getElementById('getProject').addEventListener('click', async function() {
+      const projectId = document.getElementById('projectId').value.trim();
+      
+      if (!projectId) {
+        showStatus('projectStatus', 'Please enter a project ID', 'error');
+        return;
+      }
+      
+      showStatus('projectStatus', 'Fetching project details...', 'loading');
+      
+      try {
+        if (!initializeSDK()) {
+          throw new Error('Failed to initialize SDK');
+        }
+        
+        const project = await sdk.getProject(projectId);
+        showStatus('projectStatus', 'Project details retrieved successfully!', 'success');
+        displayResult('projectResult', project);
+      } catch (error) {
+        displayError('projectStatus', 'projectResult', error);
+      }
+    });
+    
+    // Get Project Stats
+    document.getElementById('getProjectStats').addEventListener('click', async function() {
+      const projectId = document.getElementById('projectId').value.trim();
+      
+      if (!projectId) {
+        showStatus('projectStatus', 'Please enter a project ID', 'error');
+        return;
+      }
+      
+      showStatus('projectStatus', 'Fetching project statistics...', 'loading');
+      
+      try {
+        if (!initializeSDK()) {
+          throw new Error('Failed to initialize SDK');
+        }
+        
+        const stats = await sdk.getProjectStats(projectId);
+        showStatus('projectStatus', 'Project statistics retrieved successfully!', 'success');
+        displayResult('projectResult', stats);
+      } catch (error) {
+        displayError('projectStatus', 'projectResult', error);
+      }
+    });
+    
+    // Get Project Investments
+    document.getElementById('getProjectInvestments').addEventListener('click', async function() {
+      const projectId = document.getElementById('investmentProjectId').value.trim();
+      const limit = parseInt(document.getElementById('investmentsLimit').value) || 10;
+      const offset = parseInt(document.getElementById('investmentsOffset').value) || 0;
+      
+      if (!projectId) {
+        showStatus('investmentsStatus', 'Please enter a project ID', 'error');
+        return;
+      }
+      
+      showStatus('investmentsStatus', 'Fetching project investments...', 'loading');
+      
+      try {
+        if (!initializeSDK()) {
+          throw new Error('Failed to initialize SDK');
+        }
+        
+        const investments = await sdk.getProjectInvestments(projectId, limit, offset);
+        showStatus('investmentsStatus', `Retrieved ${investments.length} investments successfully!`, 'success');
+        displayResult('investmentsResult', investments);
+      } catch (error) {
+        displayError('investmentsStatus', 'investmentsResult', error);
+      }
+    });
+    
+    // Get Investor Investment
+    document.getElementById('getInvestorInvestment').addEventListener('click', async function() {
+      const projectId = document.getElementById('investorProjectId').value.trim();
+      const investorPublicKey = document.getElementById('investorPublicKey').value.trim();
+      
+      if (!projectId) {
+        showStatus('investorStatus', 'Please enter a project ID', 'error');
+        return;
+      }
+      
+      if (!investorPublicKey) {
+        showStatus('investorStatus', 'Please enter an investor public key', 'error');
+        return;
+      }
+      
+      showStatus('investorStatus', 'Fetching investor investment...', 'loading');
+      
+      try {
+        if (!initializeSDK()) {
+          throw new Error('Failed to initialize SDK');
+        }
+        
+        const investment = await sdk.getInvestorInvestment(projectId, investorPublicKey);
+        showStatus('investorStatus', 'Investor investment retrieved successfully!', 'success');
+        displayResult('investorResult', investment);
+      } catch (error) {
+        displayError('investorStatus', 'investorResult', error);
+      }
+    });
+    
+    // Initialize SDK on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      // Debug: Check what's available
+      console.log('AngorHubSDK type:', typeof AngorHubSDK);
+      console.log('AngorHubSDK keys:', Object.keys(AngorHubSDK || {}));
+      console.log('AngorHubSDK.AngorHubSDK type:', typeof (AngorHubSDK && AngorHubSDK.AngorHubSDK));
+      
+      initializeSDK();
+    });
+  </script>
+</body>
+</html>
