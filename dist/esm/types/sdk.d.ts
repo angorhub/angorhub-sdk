@@ -7,12 +7,15 @@ interface SDKConfig {
     timeout?: number;
     useRemoteConfig?: boolean;
     customIndexerUrl?: string;
+    enableNostr?: boolean;
+    nostrRelays?: string[];
 }
 export declare class AngorHubSDK {
     private network;
     private config;
     private indexers;
     private currentIndexer;
+    private nostrService?;
     private networks;
     constructor(network?: 'mainnet' | 'testnet', config?: SDKConfig);
     private makeRequest;

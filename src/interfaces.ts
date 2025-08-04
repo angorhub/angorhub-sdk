@@ -4,8 +4,9 @@ export interface AngorProject {
   createdOnBlock: number;
   trxId: string;
   nostrEventId: string;
+  projectInfo?: ProjectInfo;
+  metadata?: ProjectProfileMetadata;
 }
-
 
 export interface AngorProjectDetails extends AngorProject {
   totalInvestmentsCount: number;
@@ -20,7 +21,6 @@ export interface AngorProjectStats {
   countInPenalties: number;
 }
 
-
 export interface AngorInvestment {
   investorPublicKey: string;
   totalAmount: number;
@@ -29,7 +29,7 @@ export interface AngorInvestment {
   isSeeder: boolean;
 }
 
-export interface ProjectUpdate {
+export interface ProjectInfo {
   founderKey: string;
   founderRecoveryKey: string;
   projectIdentifier: string;
@@ -41,4 +41,15 @@ export interface ProjectUpdate {
   targetAmount: number;
   stages: [{ amountToRelease: number; releaseDate: number }];
   projectSeeders: { threshold: number; secretHashes: string[] }[];
+}
+
+export interface ProjectProfileMetadata {
+  name?: string;
+  about?: string;
+  picture?: string;
+  website?: string;
+  nip05?: string;
+  lud16?: string;
+  display_name?: string;
+  banner?: string;
 }

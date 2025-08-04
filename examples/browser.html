@@ -233,7 +233,88 @@
     }
     
     function displayResult(elementId, data) {
-      document.getElementById(elementId).textContent = JSON.stringify(data, null, 2);
+      const resultElement = document.getElementById(elementId);
+      
+      if (Array.isArray(data)) {
+        // Display projects in a formatted table
+        let output = '';
+        
+        data.forEach((project, index) => {
+          output += `\n=== Project ${index + 1} ===\n`;
+          output += `Project ID: ${project.projectIdentifier}\n`;
+          output += `Founder Key: ${project.founderKey}\n`;
+          output += `Transaction ID: ${project.trxId}\n`;
+          output += `Nostr Event ID: ${project.nostrEventId}\n`;
+          
+          // Display Nostr project info if available
+          if (project.projectInfo) {
+            output += `\n--- Project Info (Nostr) ---\n`;
+            output += `Nostr Pub Key: ${project.projectInfo.nostrPubKey}\n`;
+            output += `Target Amount: ${project.projectInfo.targetAmount}\n`;
+            output += `Start Date: ${new Date(project.projectInfo.startDate * 1000).toLocaleDateString()}\n`;
+            output += `End Date: ${new Date(project.projectInfo.endDate * 1000).toLocaleDateString()}\n`;
+            output += `Penalty Days: ${project.projectInfo.penaltyDays}\n`;
+            output += `Stages: ${project.projectInfo.stages.length}\n`;
+          }
+          
+          // Display profile metadata if available
+          if (project.metadata) {
+            output += `\n--- Profile (Nostr) ---\n`;
+            output += `Name: ${project.metadata.name || 'N/A'}\n`;
+            output += `Display Name: ${project.metadata.display_name || 'N/A'}\n`;
+            output += `About: ${project.metadata.about || 'N/A'}\n`;
+            output += `Website: ${project.metadata.website || 'N/A'}\n`;
+            output += `Picture: ${project.metadata.picture || 'N/A'}\n`;
+            output += `NIP-05: ${project.metadata.nip05 || 'N/A'}\n`;
+          }
+          
+          output += '\n' + '='.repeat(50) + '\n';
+        });
+        
+        resultElement.textContent = output;
+      } else {
+        // Single project or other data
+        let output = JSON.stringify(data, null, 2);
+        
+        // If it's a single project with enhanced data, format it nicely
+        if (data.projectIdentifier) {
+          output = `Project ID: ${data.projectIdentifier}\n`;
+          output += `Founder Key: ${data.founderKey}\n`;
+          output += `Transaction ID: ${data.trxId}\n`;
+          output += `Nostr Event ID: ${data.nostrEventId}\n`;
+          
+          if (data.totalInvestmentsCount !== undefined) {
+            output += `Total Investments: ${data.totalInvestmentsCount}\n`;
+          }
+          
+          // Display Nostr project info if available
+          if (data.projectInfo) {
+            output += `\n--- Project Info (Nostr) ---\n`;
+            output += `Nostr Pub Key: ${data.projectInfo.nostrPubKey}\n`;
+            output += `Target Amount: ${data.projectInfo.targetAmount}\n`;
+            output += `Start Date: ${new Date(data.projectInfo.startDate * 1000).toLocaleDateString()}\n`;
+            output += `End Date: ${new Date(data.projectInfo.endDate * 1000).toLocaleDateString()}\n`;
+            output += `Penalty Days: ${data.projectInfo.penaltyDays}\n`;
+            output += `Stages: ${JSON.stringify(data.projectInfo.stages, null, 2)}\n`;
+            output += `Project Seeders: ${JSON.stringify(data.projectInfo.projectSeeders, null, 2)}\n`;
+          }
+          
+          // Display profile metadata if available
+          if (data.metadata) {
+            output += `\n--- Profile (Nostr) ---\n`;
+            output += `Name: ${data.metadata.name || 'N/A'}\n`;
+            output += `Display Name: ${data.metadata.display_name || 'N/A'}\n`;
+            output += `About: ${data.metadata.about || 'N/A'}\n`;
+            output += `Website: ${data.metadata.website || 'N/A'}\n`;
+            output += `Picture: ${data.metadata.picture || 'N/A'}\n`;
+            output += `NIP-05: ${data.metadata.nip05 || 'N/A'}\n`;
+            output += `LUD-16: ${data.metadata.lud16 || 'N/A'}\n`;
+            output += `Banner: ${data.metadata.banner || 'N/A'}\n`;
+          }
+        }
+        
+        resultElement.textContent = output;
+      }
     }
     
     function displayError(statusId, resultId, error) {

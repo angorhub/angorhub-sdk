@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { NostrService } from './nostr-service';
 export class AngorHubSDK {
     constructor(network = 'mainnet', config = {}) {
         this.networks = {
@@ -17,6 +18,8 @@ export class AngorHubSDK {
             timeout: config.timeout || 8000,
             useRemoteConfig: config.useRemoteConfig !== false,
             customIndexerUrl: config.customIndexerUrl,
+            enableNostr: config.enableNostr !== false, // Default to true
+            nostrRelays: config.nostrRelays,
         };
         if (this.config.customIndexerUrl) {
             this.indexers = [{ url: this.config.customIndexerUrl, isPrimary: true }];
@@ -25,6 +28,10 @@ export class AngorHubSDK {
             this.indexers = this.networks[network];
         }
         this.currentIndexer = this.indexers.find(i => i.isPrimary) || this.indexers[0];
+        // Initialize Nostr service if enabled
+        if (this.config.enableNostr) {
+            this.nostrService = new NostrService(this.config.nostrRelays);
+        }
     }
     async makeRequest(endpoint, params = {}) {
         for (const indexer of this.indexers) {
@@ -41,10 +48,20 @@ export class AngorHubSDK {
         throw new Error('All indexers failed');
     }
     async getProjects(limit = 10, offset = 0) {
-        return await this.makeRequest('projects', { limit, offset });
+        const projects = await this.makeRequest('projects', { limit, offset });
+        // Enhance with Nostr data if service is available
+        if (this.nostrService) {
+            return await this.nostrService.enrichProjectsWithNostrData(projects);
+        }
+        return projects;
     }
     async getProject(projectId) {
-        return await this.makeRequest(`projects/${projectId}`);
+        const project = await this.makeRequest(`projects/${projectId}`);
+        // Enhance with Nostr data if service is available
+        if (this.nostrService) {
+            return await this.nostrService.enrichProjectWithNostrData(project);
+        }
+        return project;
     }
     async getProjectStats(projectId) {
         return await this.makeRequest(`projects/${projectId}/stats`);
