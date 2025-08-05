@@ -1,15 +1,19 @@
-import axios from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { NostrService } from './nostr-service';
 import type {
   AngorProject,
   AngorProjectDetails,
   AngorProjectStats,
-  AngorInvestment
+  AngorInvestment,
+  CacheEntry,
+  RequestConfig,
+  IndexerHealth
 } from './interfaces';
 
 interface Indexer {
   url: string;
   isPrimary: boolean;
+  priority: number;
 }
 
 interface SDKConfig {
@@ -18,24 +22,37 @@ interface SDKConfig {
   customIndexerUrl?: string;
   enableNostr?: boolean;
   nostrRelays?: string[];
+  enableCache?: boolean;
+  cacheTtl?: number;
+  maxRetries?: number;
+  retryDelay?: number;
+  healthCheckInterval?: number;
+  enableCompression?: boolean;
+  concurrentRequests?: number;
 }
 
 export class AngorHubSDK {
   private network: 'mainnet' | 'testnet';
-  private config: SDKConfig;
-  private indexers: Indexer[];
-  private currentIndexer: Indexer;
+  private config: Required<SDKConfig>;
+  private indexers: Indexer[] = [];
+  private healthyIndexers: Indexer[] = [];
   private nostrService?: NostrService;
+  private cache = new Map<string, CacheEntry<any>>();
+  private pendingRequests = new Map<string, Promise<any>>();
+  private healthStatus = new Map<string, IndexerHealth>();
+  private healthCheckTimer?: NodeJS.Timeout;
+  private axiosInstances = new Map<string, AxiosInstance>();
+  private requestQueue: Array<() => Promise<any>> = [];
+  private activeRequests = 0;
 
   private networks = {
     mainnet: [
-      { url: 'https://fulcrum.angor.online/', isPrimary: true },
-      { url: 'https://indexer.angor.io/', isPrimary: false },
-      { url: 'https://electrs.angor.online/', isPrimary: false }
+      { url: 'https://fulcrum.angor.online/', isPrimary: true, priority: 1 },
+      { url: 'https://electrs.angor.online/', isPrimary: false, priority: 2 },
     ],
     testnet: [
-      { url: 'https://test.indexer.angor.io/', isPrimary: true },
-      { url: 'https://signet.angor.online/', isPrimary: false }
+      { url: 'https://test.indexer.angor.io/', isPrimary: true, priority: 1 },
+      { url: 'https://signet.angor.online/', isPrimary: false, priority: 2 }
     ]
   };
 
@@ -44,54 +61,299 @@ export class AngorHubSDK {
     this.config = {
       timeout: config.timeout || 8000,
       useRemoteConfig: config.useRemoteConfig !== false,
-      customIndexerUrl: config.customIndexerUrl,
-      enableNostr: config.enableNostr !== false, // Default to true
-      nostrRelays: config.nostrRelays,
+      customIndexerUrl: config.customIndexerUrl || '',
+      enableNostr: config.enableNostr !== false,
+      nostrRelays: config.nostrRelays || [],
+      enableCache: config.enableCache !== false,
+      cacheTtl: config.cacheTtl || 300_000, // 5 minutes
+      maxRetries: config.maxRetries || 3,
+      retryDelay: config.retryDelay || 1000,
+      healthCheckInterval: config.healthCheckInterval || 60_000, // 1 minute
+      enableCompression: config.enableCompression !== false,
+      concurrentRequests: config.concurrentRequests || 10
     };
 
+    this.initializeIndexers();
+    this.initializeNostrService();
+    this.startHealthChecks();
+  }
+
+  private initializeIndexers(): void {
     if (this.config.customIndexerUrl) {
-      this.indexers = [{ url: this.config.customIndexerUrl, isPrimary: true }];
+      this.indexers = [{ url: this.config.customIndexerUrl, isPrimary: true, priority: 1 }];
     } else {
-      this.indexers = this.networks[network];
+      this.indexers = [...this.networks[this.network]];
     }
 
-    this.currentIndexer = this.indexers.find(i => i.isPrimary) || this.indexers[0];
+    this.healthyIndexers = [...this.indexers];
+    this.initializeAxiosInstances();
+  }
 
-    // Initialize Nostr service if enabled
+  private initializeAxiosInstances(): void {
+    this.indexers.forEach(indexer => {
+      const axiosConfig: AxiosRequestConfig = {
+        baseURL: `${indexer.url}api/query/Angor/`,
+        timeout: this.config.timeout,
+        maxRedirects: 3,
+        validateStatus: (status) => status < 500,
+      };
+
+      // Browser-safe headers - avoid setting compression headers in browser
+      if (typeof window !== 'undefined') {
+        // Browser environment
+        axiosConfig.headers = {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        };
+      } else {
+        // Node.js environment - can set compression headers
+        axiosConfig.headers = {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        };
+        
+        if (this.config.enableCompression) {
+          axiosConfig.headers['Accept-Encoding'] = 'gzip, deflate, br';
+        }
+      }
+
+      this.axiosInstances.set(indexer.url, axios.create(axiosConfig));
+    });
+  }
+
+  private initializeNostrService(): void {
     if (this.config.enableNostr) {
       this.nostrService = new NostrService(this.config.nostrRelays);
     }
   }
 
-  private async makeRequest<T>(endpoint: string, params: Record<string, any> = {}): Promise<T> {
-    for (const indexer of this.indexers) {
-      try {
-        const response = await axios.get<T>(`${indexer.url}api/query/Angor/${endpoint}`, {
-          params,
-          timeout: this.config.timeout
-        });
-        this.currentIndexer = indexer;
-        return response.data;
-      } catch (_) {}
-    }
-    throw new Error('All indexers failed');
+  private getCacheKey(endpoint: string, params: Record<string, any> = {}): string {
+    const sortedParams = Object.keys(params).sort().reduce((result, key) => {
+      result[key] = params[key];
+      return result;
+    }, {} as Record<string, any>);
+    
+    return `${this.network}:${endpoint}:${JSON.stringify(sortedParams)}`;
   }
 
-  async getProjects(limit = 10, offset = 0): Promise<AngorProject[]> {
-    const projects = await this.makeRequest<AngorProject[]>('projects', { limit, offset });
+  private getFromCache<T>(key: string): T | null {
+    if (!this.config.enableCache) return null;
+
+    const entry = this.cache.get(key);
+    if (!entry) return null;
+
+    if (Date.now() > entry.timestamp + entry.ttl) {
+      this.cache.delete(key);
+      return null;
+    }
+
+    return entry.data;
+  }
+
+  private setCache<T>(key: string, data: T, ttl = this.config.cacheTtl): void {
+    if (!this.config.enableCache) return;
+
+    this.cache.set(key, {
+      data,
+      timestamp: Date.now(),
+      ttl
+    });
+  }
+
+  private async checkIndexerHealth(indexer: Indexer): Promise<IndexerHealth> {
+    const startTime = Date.now();
+    const health: IndexerHealth = {
+      url: indexer.url,
+      isHealthy: false,
+      responseTime: 0,
+      lastCheck: Date.now(),
+      errorCount: this.healthStatus.get(indexer.url)?.errorCount || 0
+    };
+
+    try {
+      const axiosInstance = this.axiosInstances.get(indexer.url);
+      if (!axiosInstance) throw new Error('No axios instance');
+
+      const response = await axiosInstance.get('projects', {
+        params: { limit: 1 },
+        timeout: 5000
+      });
+
+      health.responseTime = Date.now() - startTime;
+      health.isHealthy = response.status === 200;
+      health.errorCount = 0;
+    } catch (error) {
+      health.responseTime = Date.now() - startTime;
+      health.isHealthy = false;
+      health.errorCount++;
+    }
+
+    this.healthStatus.set(indexer.url, health);
+    return health;
+  }
+
+  private async updateHealthyIndexers(): Promise<void> {
+    const healthChecks = await Promise.all(
+      this.indexers.map(indexer => this.checkIndexerHealth(indexer))
+    );
+
+    this.healthyIndexers = this.indexers
+      .filter(indexer => {
+        const health = this.healthStatus.get(indexer.url);
+        return health?.isHealthy && health.errorCount < 5;
+      })
+      .sort((a, b) => {
+        const healthA = this.healthStatus.get(a.url);
+        const healthB = this.healthStatus.get(b.url);
+        
+        if (a.priority !== b.priority) {
+          return a.priority - b.priority;
+        }
+        
+        return (healthA?.responseTime || Infinity) - (healthB?.responseTime || Infinity);
+      });
+
+    if (this.healthyIndexers.length === 0) {
+      this.healthyIndexers = [...this.indexers];
+    }
+  }
+
+  private startHealthChecks(): void {
+    this.updateHealthyIndexers();
+
+    this.healthCheckTimer = setInterval(() => {
+      this.updateHealthyIndexers();
+    }, this.config.healthCheckInterval);
+  }
+
+  private async throttleRequest<T>(requestFn: () => Promise<T>): Promise<T> {
+    if (this.activeRequests >= this.config.concurrentRequests) {
+      return new Promise((resolve, reject) => {
+        this.requestQueue.push(async () => {
+          try {
+            const result = await requestFn();
+            resolve(result);
+          } catch (error) {
+            reject(error);
+          }
+        });
+      });
+    }
+
+    this.activeRequests++;
     
-    // Enhance with Nostr data if service is available
-    if (this.nostrService) {
+    try {
+      const result = await requestFn();
+      return result;
+    } finally {
+      this.activeRequests--;
+      
+      if (this.requestQueue.length > 0) {
+        const nextRequest = this.requestQueue.shift();
+        if (nextRequest) {
+          setImmediate(() => nextRequest());
+        }
+      }
+    }
+  }
+
+  private async makeRequestWithRetry<T>(
+    endpoint: string, 
+    params: Record<string, any> = {},
+    requestConfig: RequestConfig = {}
+  ): Promise<T> {
+    const config = {
+      timeout: this.config.timeout,
+      retries: this.config.maxRetries,
+      retryDelay: this.config.retryDelay,
+      useCache: this.config.enableCache,
+      cacheTtl: this.config.cacheTtl,
+      ...requestConfig
+    };
+
+    const cacheKey = this.getCacheKey(endpoint, params);
+
+    if (config.useCache) {
+      const cached = this.getFromCache<T>(cacheKey);
+      if (cached !== null) return cached;
+    }
+
+    if (this.pendingRequests.has(cacheKey)) {
+      return this.pendingRequests.get(cacheKey) as Promise<T>;
+    }
+
+    const requestPromise = this.throttleRequest(async () => {
+      let lastError: Error | null = null;
+
+      for (let attempt = 0; attempt <= config.retries; attempt++) {
+        const healthyIndexers = this.healthyIndexers.length > 0 ? this.healthyIndexers : this.indexers;
+        
+        for (const indexer of healthyIndexers) {
+          try {
+            const axiosInstance = this.axiosInstances.get(indexer.url);
+            if (!axiosInstance) continue;
+
+            const response: AxiosResponse<T> = await axiosInstance.get(endpoint, {
+              params,
+              timeout: config.timeout
+            });
+
+            if (config.useCache && response.status === 200) {
+              this.setCache(cacheKey, response.data, config.cacheTtl);
+            }
+
+            return response.data;
+          } catch (error: any) {
+            lastError = error;
+            
+            const health = this.healthStatus.get(indexer.url);
+            if (health) {
+              health.errorCount++;
+              health.isHealthy = false;
+            }
+
+            continue;
+          }
+        }
+
+        if (attempt < config.retries) {
+          await new Promise(resolve => setTimeout(resolve, config.retryDelay * (attempt + 1)));
+        }
+      }
+
+      throw lastError || new Error('All indexers failed');
+    });
+
+    this.pendingRequests.set(cacheKey, requestPromise);
+    
+    try {
+      const result = await requestPromise;
+      return result;
+    } finally {
+      this.pendingRequests.delete(cacheKey);
+    }
+  }
+
+  async getProjects(limit = 10, offset = 0, useCache = true): Promise<AngorProject[]> {
+    const projects = await this.makeRequestWithRetry<AngorProject[]>('projects', 
+      { limit, offset }, 
+      { useCache }
+    );
+    
+    if (this.nostrService && projects.length > 0) {
       return await this.nostrService.enrichProjectsWithNostrData(projects);
     }
     
     return projects;
   }
 
-  async getProject(projectId: string): Promise<AngorProjectDetails> {
-    const project = await this.makeRequest<AngorProjectDetails>(`projects/${projectId}`);
+  async getProject(projectId: string, useCache = true): Promise<AngorProjectDetails> {
+    const project = await this.makeRequestWithRetry<AngorProjectDetails>(
+      `projects/${projectId}`, 
+      {}, 
+      { useCache }
+    );
     
-    // Enhance with Nostr data if service is available
     if (this.nostrService) {
       return await this.nostrService.enrichProjectWithNostrData(project);
     }
@@ -99,24 +361,111 @@ export class AngorHubSDK {
     return project;
   }
 
-  async getProjectStats(projectId: string): Promise<AngorProjectStats> {
-    return await this.makeRequest(`projects/${projectId}/stats`);
+  async getProjectStats(projectId: string, useCache = true): Promise<AngorProjectStats> {
+    return await this.makeRequestWithRetry<AngorProjectStats>(
+      `projects/${projectId}/stats`, 
+      {}, 
+      { useCache, cacheTtl: 60_000 }
+    );
   }
 
-  async getProjectInvestments(projectId: string, limit = 10, offset = 0): Promise<AngorInvestment[]> {
-    return await this.makeRequest(`projects/${projectId}/investments`, { limit, offset });
+  async getProjectInvestments(
+    projectId: string, 
+    limit = 10, 
+    offset = 0, 
+    useCache = true
+  ): Promise<AngorInvestment[]> {
+    return await this.makeRequestWithRetry<AngorInvestment[]>(
+      `projects/${projectId}/investments`, 
+      { limit, offset }, 
+      { useCache }
+    );
   }
 
-  async getInvestorInvestment(projectId: string, investorPublicKey: string): Promise<AngorInvestment> {
-    return await this.makeRequest(`projects/${projectId}/investments/${investorPublicKey}`);
+  async getInvestorInvestment(
+    projectId: string, 
+    investorPublicKey: string, 
+    useCache = true
+  ): Promise<AngorInvestment> {
+    return await this.makeRequestWithRetry<AngorInvestment>(
+      `projects/${projectId}/investments/${investorPublicKey}`, 
+      {}, 
+      { useCache }
+    );
+  }
+
+  async getMultipleProjects(projectIds: string[], useCache = true): Promise<AngorProjectDetails[]> {
+    const requests = projectIds.map(id => this.getProject(id, useCache));
+    return await Promise.all(requests);
+  }
+
+  async getMultipleProjectStats(projectIds: string[], useCache = true): Promise<AngorProjectStats[]> {
+    const requests = projectIds.map(id => this.getProjectStats(id, useCache));
+    return await Promise.all(requests);
+  }
+
+  clearCache(): void {
+    this.cache.clear();
+    if (this.nostrService) {
+      this.nostrService.clearCache();
+    }
+  }
+
+  getCacheStats(): { 
+    sdkCache: { size: number; keys: string[] }; 
+    nostrCache?: { size: number; keys: string[] } 
+  } {
+    const stats = {
+      sdkCache: {
+        size: this.cache.size,
+        keys: Array.from(this.cache.keys())
+      }
+    };
+
+    if (this.nostrService) {
+      return {
+        ...stats,
+        nostrCache: this.nostrService.getCacheStats()
+      };
+    }
+
+    return stats;
+  }
+
+  getHealthStatus(): { indexers: IndexerHealth[]; healthyCount: number } {
+    return {
+      indexers: Array.from(this.healthStatus.values()),
+      healthyCount: this.healthyIndexers.length
+    };
   }
 
   getConfigInfo() {
     return {
       network: this.network,
-      currentIndexer: this.currentIndexer,
-      availableIndexers: this.indexers,
+      config: this.config,
+      currentHealthyIndexers: this.healthyIndexers.length,
+      totalIndexers: this.indexers.length,
+      cacheSize: this.cache.size,
+      activeRequests: this.activeRequests,
+      queuedRequests: this.requestQueue.length,
       timestamp: new Date().toISOString()
     };
+  }
+
+  destroy(): void {
+    if (this.healthCheckTimer) {
+      clearInterval(this.healthCheckTimer);
+      this.healthCheckTimer = undefined;
+    }
+
+    this.clearCache();
+    this.pendingRequests.clear();
+    this.requestQueue.length = 0;
+
+    if (this.nostrService) {
+      this.nostrService.disconnect();
+    }
+
+    this.axiosInstances.clear();
   }
 }

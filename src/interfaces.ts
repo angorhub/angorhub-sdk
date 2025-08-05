@@ -12,7 +12,6 @@ export interface AngorProjectDetails extends AngorProject {
   totalInvestmentsCount: number;
 }
 
-
 export interface AngorProjectStats {
   investorCount: number;
   amountInvested: number;
@@ -52,4 +51,33 @@ export interface ProjectProfileMetadata {
   lud16?: string;
   display_name?: string;
   banner?: string;
+}
+
+export interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+  ttl: number;
+}
+
+export interface RequestConfig {
+  timeout?: number;
+  retries?: number;
+  retryDelay?: number;
+  useCache?: boolean;
+  cacheTtl?: number;
+}
+
+export interface IndexerHealth {
+  url: string;
+  isHealthy: boolean;
+  responseTime: number;
+  lastCheck: number;
+  errorCount: number;
+}
+
+export interface BatchNostrRequest {
+  eventIds: string[];
+  pubKeys: string[];
+  resolver: (results: Map<string, any>) => void;
+  rejecter: (error: Error) => void;
 }

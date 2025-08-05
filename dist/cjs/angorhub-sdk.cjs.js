@@ -20451,89 +20451,236 @@ class NostrService {
         "wss://relay2.angor.io"
     ]) {
         this.isInitialized = false;
-        this.ndk = new NDK({
-            explicitRelayUrls: relays,
-        });
+        this.cache = new Map();
+        this.pendingRequests = new Map();
+        this.batchQueue = [];
+        this.batchTimeout = null;
+        this.BATCH_DELAY = 50; // ms
+        this.BATCH_SIZE = 20;
+        this.DEFAULT_CACHE_TTL = 300000; // 5 minutes
+        try {
+            this.ndk = new NDK({
+                explicitRelayUrls: relays,
+                enableOutboxModel: false // Disable for better browser compatibility
+            });
+        }
+        catch (error) {
+            console.warn('Failed to initialize NDK:', error);
+            // Create a minimal fallback NDK instance
+            this.ndk = new NDK({
+                explicitRelayUrls: relays.slice(0, 2) // Use only first 2 relays as fallback
+            });
+        }
     }
     async initialize() {
         if (this.isInitialized)
             return;
         try {
+            console.log('Initializing Nostr service...');
             await this.ndk.connect();
             this.isInitialized = true;
+            console.log('✅ Nostr service initialized successfully');
         }
         catch (error) {
             console.error('Failed to initialize Nostr service:', error);
-            throw error;
+            // Don't throw error, just log it - continue without Nostr
+            this.isInitialized = false;
         }
     }
-    async getProjectInfo(nostrEventId) {
-        try {
-            await this.initialize();
-            // Fetch project info events (kinds 3030, 30078)
-            const filter = {
-                ids: [nostrEventId],
-                kinds: [3030, 30078],
-                limit: 1
-            };
-            const events = await this.ndk.fetchEvents(filter);
-            if (events.size === 0) {
-                console.warn(`No project info found for event ID: ${nostrEventId}`);
-                return null;
+    getCacheKey(type, id) {
+        return `${type}:${id}`;
+    }
+    getFromCache(key) {
+        const entry = this.cache.get(key);
+        if (!entry)
+            return null;
+        if (Date.now() > entry.timestamp + entry.ttl) {
+            this.cache.delete(key);
+            return null;
+        }
+        return entry.data;
+    }
+    setCache(key, data, ttl = this.DEFAULT_CACHE_TTL) {
+        this.cache.set(key, {
+            data,
+            timestamp: Date.now(),
+            ttl
+        });
+    }
+    async deduplicateRequest(key, requestFn) {
+        if (this.pendingRequests.has(key)) {
+            return this.pendingRequests.get(key);
+        }
+        const promise = requestFn().finally(() => {
+            this.pendingRequests.delete(key);
+        });
+        this.pendingRequests.set(key, promise);
+        return promise;
+    }
+    async getProjectInfo(nostrEventId, useCache = true) {
+        const cacheKey = this.getCacheKey('project', nostrEventId);
+        if (useCache) {
+            const cached = this.getFromCache(cacheKey);
+            if (cached) {
+                console.log(`📦 Using cached project info for ${nostrEventId}`);
+                return cached;
             }
-            const event = Array.from(events)[0];
+        }
+        return this.deduplicateRequest(cacheKey, async () => {
             try {
+                console.log(`🔍 Fetching project info for event ID: ${nostrEventId}`);
+                await this.initialize();
+                if (!this.isInitialized) {
+                    console.log('❌ Nostr service not initialized, skipping project info fetch');
+                    return null;
+                }
+                const filter = {
+                    ids: [nostrEventId],
+                    kinds: [3030, 30078],
+                    limit: 1
+                };
+                console.log('📡 Fetching from Nostr relays...');
+                const events = await this.ndk.fetchEvents(filter);
+                if (events.size === 0) {
+                    console.log(`⚠️ No project info found for event ID: ${nostrEventId}`);
+                    this.setCache(cacheKey, null, 60000); // Cache null for 1 minute
+                    return null;
+                }
+                const event = Array.from(events)[0];
                 const projectInfo = JSON.parse(event.content);
+                console.log(`✅ Found project info for ${nostrEventId}:`, projectInfo.targetAmount);
+                if (useCache) {
+                    this.setCache(cacheKey, projectInfo);
+                }
                 return projectInfo;
             }
-            catch (parseError) {
-                console.error('Failed to parse project info:', parseError);
+            catch (error) {
+                console.error(`❌ Error fetching project info for ${nostrEventId}:`, error);
                 return null;
             }
-        }
-        catch (error) {
-            console.error('Error fetching project info:', error);
-            return null;
-        }
+        });
     }
-    async getProfileMetadata(nostrPubKey) {
-        try {
-            await this.initialize();
-            // Fetch user profile metadata (kind 0)
-            const filter = {
-                authors: [nostrPubKey],
-                kinds: [0],
-                limit: 1
-            };
-            const events = await this.ndk.fetchEvents(filter);
-            if (events.size === 0) {
-                console.warn(`No profile metadata found for pubkey: ${nostrPubKey}`);
-                return null;
+    async getProfileMetadata(nostrPubKey, useCache = true) {
+        const cacheKey = this.getCacheKey('profile', nostrPubKey);
+        if (useCache) {
+            const cached = this.getFromCache(cacheKey);
+            if (cached) {
+                console.log(`📦 Using cached profile metadata for ${nostrPubKey}`);
+                return cached;
             }
-            const event = Array.from(events)[0];
+        }
+        return this.deduplicateRequest(cacheKey, async () => {
             try {
+                console.log(`👤 Fetching profile metadata for pubkey: ${nostrPubKey}`);
+                await this.initialize();
+                if (!this.isInitialized) {
+                    console.log('❌ Nostr service not initialized, skipping profile fetch');
+                    return null;
+                }
+                const filter = {
+                    authors: [nostrPubKey],
+                    kinds: [0],
+                    limit: 1
+                };
+                console.log('📡 Fetching profile from Nostr relays...');
+                const events = await this.ndk.fetchEvents(filter);
+                if (events.size === 0) {
+                    console.log(`⚠️ No profile metadata found for pubkey: ${nostrPubKey}`);
+                    this.setCache(cacheKey, null, 60000); // Cache null for 1 minute
+                    return null;
+                }
+                const event = Array.from(events)[0];
                 const metadata = JSON.parse(event.content);
+                console.log(`✅ Found profile metadata for ${nostrPubKey}:`, metadata.name || 'No name');
+                if (useCache) {
+                    this.setCache(cacheKey, metadata);
+                }
                 return metadata;
             }
-            catch (parseError) {
-                console.error('Failed to parse profile metadata:', parseError);
+            catch (error) {
+                console.error(`❌ Error fetching profile metadata for ${nostrPubKey}:`, error);
                 return null;
             }
+        });
+    }
+    async processBatch() {
+        if (this.batchQueue.length === 0)
+            return;
+        const batch = this.batchQueue.splice(0, this.BATCH_SIZE);
+        const allEventIds = new Set();
+        const allPubKeys = new Set();
+        batch.forEach(req => {
+            req.eventIds.forEach(id => allEventIds.add(id));
+            req.pubKeys.forEach(key => allPubKeys.add(key));
+        });
+        try {
+            await this.initialize();
+            // Fetch all project info and profile data in parallel
+            const [projectEvents, profileEvents] = await Promise.all([
+                allEventIds.size > 0 ? this.ndk.fetchEvents({
+                    ids: Array.from(allEventIds),
+                    kinds: [3030, 30078]
+                }) : new Set(),
+                allPubKeys.size > 0 ? this.ndk.fetchEvents({
+                    authors: Array.from(allPubKeys),
+                    kinds: [0]
+                }) : new Set()
+            ]);
+            // Process results
+            const results = new Map();
+            // Process project events
+            for (const event of projectEvents) {
+                try {
+                    const ndkEvent = event;
+                    const projectInfo = JSON.parse(ndkEvent.content);
+                    results.set(`project:${ndkEvent.id}`, projectInfo);
+                    this.setCache(this.getCacheKey('project', ndkEvent.id), projectInfo);
+                }
+                catch (error) {
+                    console.error('Failed to parse project info:', error);
+                }
+            }
+            // Process profile events
+            for (const event of profileEvents) {
+                try {
+                    const ndkEvent = event;
+                    const metadata = JSON.parse(ndkEvent.content);
+                    results.set(`profile:${ndkEvent.pubkey}`, metadata);
+                    this.setCache(this.getCacheKey('profile', ndkEvent.pubkey), metadata);
+                }
+                catch (error) {
+                    console.error('Failed to parse profile metadata:', error);
+                }
+            }
+            // Resolve all batch requests
+            batch.forEach(req => {
+                try {
+                    req.resolver(results);
+                }
+                catch (error) {
+                    req.rejecter(error);
+                }
+            });
         }
         catch (error) {
-            console.error('Error fetching profile metadata:', error);
-            return null;
+            batch.forEach(req => req.rejecter(error));
         }
+    }
+    scheduleBatch() {
+        if (this.batchTimeout)
+            return;
+        this.batchTimeout = setTimeout(() => {
+            this.batchTimeout = null;
+            this.processBatch();
+        }, this.BATCH_DELAY);
     }
     async enrichProjectWithNostrData(project) {
         if (!project.nostrEventId) {
             return project;
         }
-        // Get project info from Nostr
         const projectInfo = await this.getProjectInfo(project.nostrEventId);
         let metadata = null;
-        // If we have project info and nostrPubKey, get profile metadata
-        if (projectInfo && projectInfo.nostrPubKey) {
+        if (projectInfo === null || projectInfo === void 0 ? void 0 : projectInfo.nostrPubKey) {
             metadata = await this.getProfileMetadata(projectInfo.nostrPubKey);
         }
         return {
@@ -20543,12 +20690,98 @@ class NostrService {
         };
     }
     async enrichProjectsWithNostrData(projects) {
-        const enrichedProjects = await Promise.all(projects.map(project => this.enrichProjectWithNostrData(project)));
+        if (projects.length === 0)
+            return projects;
+        console.log(`🌐 Enriching ${projects.length} projects with Nostr data...`);
+        // Check if Nostr service is initialized
+        if (!this.isInitialized) {
+            console.log('Nostr service not initialized, attempting to initialize...');
+            await this.initialize();
+            if (!this.isInitialized) {
+                console.log('⚠️ Nostr service failed to initialize, returning projects without enrichment');
+                return projects;
+            }
+        }
+        // Collect all unique event IDs and pub keys
+        const eventIds = new Set();
+        const pubKeys = new Set();
+        projects.forEach(project => {
+            if (project.nostrEventId) {
+                eventIds.add(project.nostrEventId);
+            }
+        });
+        console.log(`Found ${eventIds.size} unique Nostr event IDs`);
+        // First, fetch all project info data
+        const projectInfoMap = new Map();
+        if (eventIds.size > 0) {
+            console.log('Fetching project info from Nostr...');
+            await Promise.all(Array.from(eventIds).map(async (eventId) => {
+                try {
+                    const projectInfo = await this.getProjectInfo(eventId);
+                    if (projectInfo) {
+                        projectInfoMap.set(eventId, projectInfo);
+                        if (projectInfo.nostrPubKey) {
+                            pubKeys.add(projectInfo.nostrPubKey);
+                        }
+                    }
+                }
+                catch (error) {
+                    console.warn(`Failed to fetch project info for ${eventId}:`, error);
+                }
+            }));
+        }
+        console.log(`Fetched ${projectInfoMap.size} project info records`);
+        // Then fetch all profile metadata
+        const metadataMap = new Map();
+        if (pubKeys.size > 0) {
+            console.log('Fetching profile metadata from Nostr...');
+            await Promise.all(Array.from(pubKeys).map(async (pubKey) => {
+                try {
+                    const metadata = await this.getProfileMetadata(pubKey);
+                    if (metadata) {
+                        metadataMap.set(pubKey, metadata);
+                    }
+                }
+                catch (error) {
+                    console.warn(`Failed to fetch metadata for ${pubKey}:`, error);
+                }
+            }));
+        }
+        console.log(`Fetched ${metadataMap.size} profile metadata records`);
+        // Finally, enrich all projects
+        const enrichedProjects = projects.map(project => {
+            if (!project.nostrEventId)
+                return project;
+            const projectInfo = projectInfoMap.get(project.nostrEventId);
+            const metadata = (projectInfo === null || projectInfo === void 0 ? void 0 : projectInfo.nostrPubKey) ? metadataMap.get(projectInfo.nostrPubKey) : null;
+            return {
+                ...project,
+                projectInfo,
+                metadata
+            };
+        });
+        const enrichedCount = enrichedProjects.filter(p => p.projectInfo || p.metadata).length;
+        console.log(`✅ Enriched ${enrichedCount}/${projects.length} projects with Nostr data`);
         return enrichedProjects;
     }
+    clearCache() {
+        this.cache.clear();
+    }
+    getCacheStats() {
+        return {
+            size: this.cache.size,
+            keys: Array.from(this.cache.keys())
+        };
+    }
     disconnect() {
+        if (this.batchTimeout) {
+            clearTimeout(this.batchTimeout);
+            this.batchTimeout = null;
+        }
+        this.clearCache();
+        this.pendingRequests.clear();
+        this.batchQueue.length = 0;
         if (this.isInitialized) {
-            // NDK doesn't have explicit disconnect, but we can clean up
             this.isInitialized = false;
         }
     }
@@ -20556,83 +20789,342 @@ class NostrService {
 
 class AngorHubSDK {
     constructor(network = 'mainnet', config = {}) {
+        this.indexers = [];
+        this.healthyIndexers = [];
+        this.cache = new Map();
+        this.pendingRequests = new Map();
+        this.healthStatus = new Map();
+        this.axiosInstances = new Map();
+        this.requestQueue = [];
+        this.activeRequests = 0;
         this.networks = {
             mainnet: [
-                { url: 'https://fulcrum.angor.online/', isPrimary: true },
-                { url: 'https://indexer.angor.io/', isPrimary: false },
-                { url: 'https://electrs.angor.online/', isPrimary: false }
+                { url: 'https://fulcrum.angor.online/', isPrimary: true, priority: 1 },
+                { url: 'https://electrs.angor.online/', isPrimary: false, priority: 2 },
             ],
             testnet: [
-                { url: 'https://test.indexer.angor.io/', isPrimary: true },
-                { url: 'https://signet.angor.online/', isPrimary: false }
+                { url: 'https://test.indexer.angor.io/', isPrimary: true, priority: 1 },
+                { url: 'https://signet.angor.online/', isPrimary: false, priority: 2 }
             ]
         };
         this.network = network;
         this.config = {
             timeout: config.timeout || 8000,
             useRemoteConfig: config.useRemoteConfig !== false,
-            customIndexerUrl: config.customIndexerUrl,
-            enableNostr: config.enableNostr !== false, // Default to true
-            nostrRelays: config.nostrRelays,
+            customIndexerUrl: config.customIndexerUrl || '',
+            enableNostr: config.enableNostr !== false,
+            nostrRelays: config.nostrRelays || [],
+            enableCache: config.enableCache !== false,
+            cacheTtl: config.cacheTtl || 300000, // 5 minutes
+            maxRetries: config.maxRetries || 3,
+            retryDelay: config.retryDelay || 1000,
+            healthCheckInterval: config.healthCheckInterval || 60000, // 1 minute
+            enableCompression: config.enableCompression !== false,
+            concurrentRequests: config.concurrentRequests || 10
         };
+        this.initializeIndexers();
+        this.initializeNostrService();
+        this.startHealthChecks();
+    }
+    initializeIndexers() {
         if (this.config.customIndexerUrl) {
-            this.indexers = [{ url: this.config.customIndexerUrl, isPrimary: true }];
+            this.indexers = [{ url: this.config.customIndexerUrl, isPrimary: true, priority: 1 }];
         }
         else {
-            this.indexers = this.networks[network];
+            this.indexers = [...this.networks[this.network]];
         }
-        this.currentIndexer = this.indexers.find(i => i.isPrimary) || this.indexers[0];
-        // Initialize Nostr service if enabled
+        this.healthyIndexers = [...this.indexers];
+        this.initializeAxiosInstances();
+    }
+    initializeAxiosInstances() {
+        this.indexers.forEach(indexer => {
+            const axiosConfig = {
+                baseURL: `${indexer.url}api/query/Angor/`,
+                timeout: this.config.timeout,
+                maxRedirects: 3,
+                validateStatus: (status) => status < 500,
+            };
+            // Browser-safe headers - avoid setting compression headers in browser
+            if (typeof window !== 'undefined') {
+                // Browser environment
+                axiosConfig.headers = {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                };
+            }
+            else {
+                // Node.js environment - can set compression headers
+                axiosConfig.headers = {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                };
+                if (this.config.enableCompression) {
+                    axiosConfig.headers['Accept-Encoding'] = 'gzip, deflate, br';
+                }
+            }
+            this.axiosInstances.set(indexer.url, axios.create(axiosConfig));
+        });
+    }
+    initializeNostrService() {
         if (this.config.enableNostr) {
             this.nostrService = new NostrService(this.config.nostrRelays);
         }
     }
-    async makeRequest(endpoint, params = {}) {
-        for (const indexer of this.indexers) {
-            try {
-                const response = await axios.get(`${indexer.url}api/query/Angor/${endpoint}`, {
-                    params,
-                    timeout: this.config.timeout
-                });
-                this.currentIndexer = indexer;
-                return response.data;
-            }
-            catch (_) { }
-        }
-        throw new Error('All indexers failed');
+    getCacheKey(endpoint, params = {}) {
+        const sortedParams = Object.keys(params).sort().reduce((result, key) => {
+            result[key] = params[key];
+            return result;
+        }, {});
+        return `${this.network}:${endpoint}:${JSON.stringify(sortedParams)}`;
     }
-    async getProjects(limit = 10, offset = 0) {
-        const projects = await this.makeRequest('projects', { limit, offset });
-        // Enhance with Nostr data if service is available
-        if (this.nostrService) {
+    getFromCache(key) {
+        if (!this.config.enableCache)
+            return null;
+        const entry = this.cache.get(key);
+        if (!entry)
+            return null;
+        if (Date.now() > entry.timestamp + entry.ttl) {
+            this.cache.delete(key);
+            return null;
+        }
+        return entry.data;
+    }
+    setCache(key, data, ttl = this.config.cacheTtl) {
+        if (!this.config.enableCache)
+            return;
+        this.cache.set(key, {
+            data,
+            timestamp: Date.now(),
+            ttl
+        });
+    }
+    async checkIndexerHealth(indexer) {
+        var _a;
+        const startTime = Date.now();
+        const health = {
+            url: indexer.url,
+            isHealthy: false,
+            responseTime: 0,
+            lastCheck: Date.now(),
+            errorCount: ((_a = this.healthStatus.get(indexer.url)) === null || _a === void 0 ? void 0 : _a.errorCount) || 0
+        };
+        try {
+            const axiosInstance = this.axiosInstances.get(indexer.url);
+            if (!axiosInstance)
+                throw new Error('No axios instance');
+            const response = await axiosInstance.get('projects', {
+                params: { limit: 1 },
+                timeout: 5000
+            });
+            health.responseTime = Date.now() - startTime;
+            health.isHealthy = response.status === 200;
+            health.errorCount = 0;
+        }
+        catch (error) {
+            health.responseTime = Date.now() - startTime;
+            health.isHealthy = false;
+            health.errorCount++;
+        }
+        this.healthStatus.set(indexer.url, health);
+        return health;
+    }
+    async updateHealthyIndexers() {
+        await Promise.all(this.indexers.map(indexer => this.checkIndexerHealth(indexer)));
+        this.healthyIndexers = this.indexers
+            .filter(indexer => {
+            const health = this.healthStatus.get(indexer.url);
+            return (health === null || health === void 0 ? void 0 : health.isHealthy) && health.errorCount < 5;
+        })
+            .sort((a, b) => {
+            const healthA = this.healthStatus.get(a.url);
+            const healthB = this.healthStatus.get(b.url);
+            if (a.priority !== b.priority) {
+                return a.priority - b.priority;
+            }
+            return ((healthA === null || healthA === void 0 ? void 0 : healthA.responseTime) || Infinity) - ((healthB === null || healthB === void 0 ? void 0 : healthB.responseTime) || Infinity);
+        });
+        if (this.healthyIndexers.length === 0) {
+            this.healthyIndexers = [...this.indexers];
+        }
+    }
+    startHealthChecks() {
+        this.updateHealthyIndexers();
+        this.healthCheckTimer = setInterval(() => {
+            this.updateHealthyIndexers();
+        }, this.config.healthCheckInterval);
+    }
+    async throttleRequest(requestFn) {
+        if (this.activeRequests >= this.config.concurrentRequests) {
+            return new Promise((resolve, reject) => {
+                this.requestQueue.push(async () => {
+                    try {
+                        const result = await requestFn();
+                        resolve(result);
+                    }
+                    catch (error) {
+                        reject(error);
+                    }
+                });
+            });
+        }
+        this.activeRequests++;
+        try {
+            const result = await requestFn();
+            return result;
+        }
+        finally {
+            this.activeRequests--;
+            if (this.requestQueue.length > 0) {
+                const nextRequest = this.requestQueue.shift();
+                if (nextRequest) {
+                    setImmediate(() => nextRequest());
+                }
+            }
+        }
+    }
+    async makeRequestWithRetry(endpoint, params = {}, requestConfig = {}) {
+        const config = {
+            timeout: this.config.timeout,
+            retries: this.config.maxRetries,
+            retryDelay: this.config.retryDelay,
+            useCache: this.config.enableCache,
+            cacheTtl: this.config.cacheTtl,
+            ...requestConfig
+        };
+        const cacheKey = this.getCacheKey(endpoint, params);
+        if (config.useCache) {
+            const cached = this.getFromCache(cacheKey);
+            if (cached !== null)
+                return cached;
+        }
+        if (this.pendingRequests.has(cacheKey)) {
+            return this.pendingRequests.get(cacheKey);
+        }
+        const requestPromise = this.throttleRequest(async () => {
+            let lastError = null;
+            for (let attempt = 0; attempt <= config.retries; attempt++) {
+                const healthyIndexers = this.healthyIndexers.length > 0 ? this.healthyIndexers : this.indexers;
+                for (const indexer of healthyIndexers) {
+                    try {
+                        const axiosInstance = this.axiosInstances.get(indexer.url);
+                        if (!axiosInstance)
+                            continue;
+                        const response = await axiosInstance.get(endpoint, {
+                            params,
+                            timeout: config.timeout
+                        });
+                        if (config.useCache && response.status === 200) {
+                            this.setCache(cacheKey, response.data, config.cacheTtl);
+                        }
+                        return response.data;
+                    }
+                    catch (error) {
+                        lastError = error;
+                        const health = this.healthStatus.get(indexer.url);
+                        if (health) {
+                            health.errorCount++;
+                            health.isHealthy = false;
+                        }
+                        continue;
+                    }
+                }
+                if (attempt < config.retries) {
+                    await new Promise(resolve => setTimeout(resolve, config.retryDelay * (attempt + 1)));
+                }
+            }
+            throw lastError || new Error('All indexers failed');
+        });
+        this.pendingRequests.set(cacheKey, requestPromise);
+        try {
+            const result = await requestPromise;
+            return result;
+        }
+        finally {
+            this.pendingRequests.delete(cacheKey);
+        }
+    }
+    async getProjects(limit = 10, offset = 0, useCache = true) {
+        const projects = await this.makeRequestWithRetry('projects', { limit, offset }, { useCache });
+        if (this.nostrService && projects.length > 0) {
             return await this.nostrService.enrichProjectsWithNostrData(projects);
         }
         return projects;
     }
-    async getProject(projectId) {
-        const project = await this.makeRequest(`projects/${projectId}`);
-        // Enhance with Nostr data if service is available
+    async getProject(projectId, useCache = true) {
+        const project = await this.makeRequestWithRetry(`projects/${projectId}`, {}, { useCache });
         if (this.nostrService) {
             return await this.nostrService.enrichProjectWithNostrData(project);
         }
         return project;
     }
-    async getProjectStats(projectId) {
-        return await this.makeRequest(`projects/${projectId}/stats`);
+    async getProjectStats(projectId, useCache = true) {
+        return await this.makeRequestWithRetry(`projects/${projectId}/stats`, {}, { useCache, cacheTtl: 60000 });
     }
-    async getProjectInvestments(projectId, limit = 10, offset = 0) {
-        return await this.makeRequest(`projects/${projectId}/investments`, { limit, offset });
+    async getProjectInvestments(projectId, limit = 10, offset = 0, useCache = true) {
+        return await this.makeRequestWithRetry(`projects/${projectId}/investments`, { limit, offset }, { useCache });
     }
-    async getInvestorInvestment(projectId, investorPublicKey) {
-        return await this.makeRequest(`projects/${projectId}/investments/${investorPublicKey}`);
+    async getInvestorInvestment(projectId, investorPublicKey, useCache = true) {
+        return await this.makeRequestWithRetry(`projects/${projectId}/investments/${investorPublicKey}`, {}, { useCache });
+    }
+    async getMultipleProjects(projectIds, useCache = true) {
+        const requests = projectIds.map(id => this.getProject(id, useCache));
+        return await Promise.all(requests);
+    }
+    async getMultipleProjectStats(projectIds, useCache = true) {
+        const requests = projectIds.map(id => this.getProjectStats(id, useCache));
+        return await Promise.all(requests);
+    }
+    clearCache() {
+        this.cache.clear();
+        if (this.nostrService) {
+            this.nostrService.clearCache();
+        }
+    }
+    getCacheStats() {
+        const stats = {
+            sdkCache: {
+                size: this.cache.size,
+                keys: Array.from(this.cache.keys())
+            }
+        };
+        if (this.nostrService) {
+            return {
+                ...stats,
+                nostrCache: this.nostrService.getCacheStats()
+            };
+        }
+        return stats;
+    }
+    getHealthStatus() {
+        return {
+            indexers: Array.from(this.healthStatus.values()),
+            healthyCount: this.healthyIndexers.length
+        };
     }
     getConfigInfo() {
         return {
             network: this.network,
-            currentIndexer: this.currentIndexer,
-            availableIndexers: this.indexers,
+            config: this.config,
+            currentHealthyIndexers: this.healthyIndexers.length,
+            totalIndexers: this.indexers.length,
+            cacheSize: this.cache.size,
+            activeRequests: this.activeRequests,
+            queuedRequests: this.requestQueue.length,
             timestamp: new Date().toISOString()
         };
+    }
+    destroy() {
+        if (this.healthCheckTimer) {
+            clearInterval(this.healthCheckTimer);
+            this.healthCheckTimer = undefined;
+        }
+        this.clearCache();
+        this.pendingRequests.clear();
+        this.requestQueue.length = 0;
+        if (this.nostrService) {
+            this.nostrService.disconnect();
+        }
+        this.axiosInstances.clear();
     }
 }
 

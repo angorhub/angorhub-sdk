@@ -212,7 +212,22 @@
       const network = document.getElementById('network').value;
       try {
         // SDK is exported as AngorHubSDK.AngorHubSDK
-        sdk = new AngorHubSDK.AngorHubSDK(network);
+        // Configure for browser environment with Nostr enabled
+        sdk = new AngorHubSDK.AngorHubSDK(network, {
+          enableNostr: true,
+          enableCache: true,
+          cacheTtl: 300000, // 5 minutes
+          maxRetries: 2,
+          timeout: 8000,
+          enableCompression: false, // Browser handles this
+          concurrentRequests: 8,
+          nostrRelays: [
+            "wss://relay.damus.io",
+            "wss://relay.primal.net",
+            "wss://nos.lol"
+          ]
+        });
+        console.log('SDK initialized with Nostr support');
         return true;
       } catch (error) {
         console.error('Failed to initialize SDK:', error);
@@ -356,10 +371,24 @@
           throw new Error('Failed to initialize SDK');
         }
         
+        console.log('SDK Config:', sdk.getConfigInfo());
+        
         const projects = await sdk.getProjects(limit, offset);
+        console.log('Raw projects data:', projects);
+        
         showStatus('projectsStatus', `Retrieved ${projects.length} projects successfully!`, 'success');
         displayResult('projectsResult', projects);
+        
+        // Check if Nostr data was enriched
+        const enrichedCount = projects.filter(p => p.projectInfo || p.metadata).length;
+        if (enrichedCount > 0) {
+          console.log(`✅ Nostr enrichment: ${enrichedCount}/${projects.length} projects enriched`);
+        } else {
+          console.log('⚠️ No Nostr enrichment found');
+        }
+        
       } catch (error) {
+        console.error('Error details:', error);
         displayError('projectsStatus', 'projectsResult', error);
       }
     });
@@ -432,8 +461,25 @@
         
         const investments = await sdk.getProjectInvestments(projectId, limit, offset);
         showStatus('investmentsStatus', `Retrieved ${investments.length} investments successfully!`, 'success');
-        displayResult('investmentsResult', investments);
+        
+        // Custom display for investments with detailed debugging
+        let output = '';
+        if (investments && investments.length > 0) {
+          investments.forEach((investment, index) => {
+            output += `=== Investment ${index + 1} ===\n`;
+            output += `Investor: ${investment.investorPublicKey}\n`;
+            output += `Amount: ${investment.totalAmount}\n`;
+            output += `Transaction ID: ${investment.transactionId}\n`;
+            output += `Is Seeder: ${investment.isSeeder ? 'Yes' : 'No'}\n`;
+            output += '\n' + '='.repeat(50) + '\n\n';
+          });
+        } else {
+          output = 'No investments found for this project';
+        }
+        
+        document.getElementById('investmentsResult').textContent = output;
       } catch (error) {
+        console.error('❌ Error getting investments:', error);
         displayError('investmentsStatus', 'investmentsResult', error);
       }
     });
