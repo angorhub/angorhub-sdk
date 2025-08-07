@@ -21,7 +21,6 @@ export class AngorHubSDK {
             ]
         };
         this.network = network;
-        // Get default Nostr relays for the network if none provided
         const defaultRelays = this.getDefaultNostrRelays(network);
         this.config = {
             timeout: config.timeout || 8000,
@@ -30,14 +29,13 @@ export class AngorHubSDK {
             enableNostr: config.enableNostr !== false,
             nostrRelays: ((_a = config.nostrRelays) === null || _a === void 0 ? void 0 : _a.length) ? config.nostrRelays : defaultRelays,
             enableCache: config.enableCache !== false,
-            cacheTtl: config.cacheTtl || 300000, // 5 minutes
+            cacheTtl: config.cacheTtl || 300000,
             maxRetries: config.maxRetries || 3,
             retryDelay: config.retryDelay || 1000,
-            healthCheckInterval: config.healthCheckInterval || 60000, // 1 minute
+            healthCheckInterval: config.healthCheckInterval || 60000,
             enableCompression: config.enableCompression !== false,
             concurrentRequests: config.concurrentRequests || 10
         };
-        console.log(`🔗 Initializing ${network} SDK with Nostr relays:`, this.config.nostrRelays);
         this.initializeIndexers();
         this.initializeNostrService();
         this.startHealthChecks();
@@ -55,7 +53,6 @@ export class AngorHubSDK {
                 "wss://relay.orangepill.dev"
             ];
         }
-        // Default mainnet relays
         return [
             "wss://relay.damus.io",
             "wss://relay.angor.io"
@@ -79,16 +76,13 @@ export class AngorHubSDK {
                 maxRedirects: 3,
                 validateStatus: (status) => status < 500,
             };
-            // Browser-safe headers - avoid setting compression headers in browser
             if (typeof window !== 'undefined') {
-                // Browser environment
                 axiosConfig.headers = {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
                 };
             }
             else {
-                // Node.js environment - can set compression headers
                 axiosConfig.headers = {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
@@ -282,7 +276,6 @@ export class AngorHubSDK {
         var _a;
         try {
             const response = await this.makeRequestWithRetry('projects', { limit, offset }, { useCache });
-            // Add safety check for response structure
             let projects;
             if (Array.isArray(response)) {
                 projects = response;
@@ -294,7 +287,6 @@ export class AngorHubSDK {
                 projects = response.projects;
             }
             else {
-                console.warn('⚠️ API response is not in expected format:', response);
                 throw new Error(`API returned unexpected format. Expected array of projects, got: ${typeof response}`);
             }
             if (this.nostrService && projects.length > 0) {
@@ -303,8 +295,6 @@ export class AngorHubSDK {
             return projects;
         }
         catch (error) {
-            console.error('❌ Error fetching projects:', error);
-            // If it's a 404 error, provide more helpful message
             if (((_a = error.response) === null || _a === void 0 ? void 0 : _a.status) === 404) {
                 throw new Error(`Projects endpoint not found (404). This may indicate the ${this.network} indexer is not available or the API endpoint has changed.`);
             }

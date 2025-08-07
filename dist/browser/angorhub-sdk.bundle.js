@@ -20454,20 +20454,18 @@ var AngorHubSDK = (function (exports, axios) {
 	        this.pendingRequests = new Map();
 	        this.batchQueue = [];
 	        this.batchTimeout = null;
-	        this.BATCH_DELAY = 50; // ms
+	        this.BATCH_DELAY = 50;
 	        this.BATCH_SIZE = 20;
-	        this.DEFAULT_CACHE_TTL = 300000; // 5 minutes
+	        this.DEFAULT_CACHE_TTL = 300000;
 	        try {
 	            this.ndk = new NDK({
 	                explicitRelayUrls: relays,
-	                enableOutboxModel: false // Disable for better browser compatibility
+	                enableOutboxModel: false
 	            });
 	        }
 	        catch (error) {
-	            console.warn('Failed to initialize NDK:', error);
-	            // Create a minimal fallback NDK instance
 	            this.ndk = new NDK({
-	                explicitRelayUrls: relays.slice(0, 2) // Use only first 2 relays as fallback
+	                explicitRelayUrls: relays.slice(0, 2)
 	            });
 	        }
 	    }
@@ -20475,14 +20473,10 @@ var AngorHubSDK = (function (exports, axios) {
 	        if (this.isInitialized)
 	            return;
 	        try {
-	            console.log('Initializing Nostr service...');
 	            await this.ndk.connect();
 	            this.isInitialized = true;
-	            console.log('✅ Nostr service initialized successfully');
 	        }
 	        catch (error) {
-	            console.error('Failed to initialize Nostr service:', error);
-	            // Don't throw error, just log it - continue without Nostr
 	            this.isInitialized = false;
 	        }
 	    }
@@ -20520,41 +20514,32 @@ var AngorHubSDK = (function (exports, axios) {
 	        const cacheKey = this.getCacheKey('project', nostrEventId);
 	        if (useCache) {
 	            const cached = this.getFromCache(cacheKey);
-	            if (cached) {
-	                console.log(`📦 Using cached project info for ${nostrEventId}`);
+	            if (cached)
 	                return cached;
-	            }
 	        }
 	        return this.deduplicateRequest(cacheKey, async () => {
 	            try {
-	                console.log(`🔍 Fetching project info for event ID: ${nostrEventId}`);
 	                await this.initialize();
-	                if (!this.isInitialized) {
-	                    console.log('❌ Nostr service not initialized, skipping project info fetch');
+	                if (!this.isInitialized)
 	                    return null;
-	                }
 	                const filter = {
 	                    ids: [nostrEventId],
 	                    kinds: [3030, 30078],
 	                    limit: 1
 	                };
-	                console.log('📡 Fetching from Nostr relays...');
 	                const events = await this.ndk.fetchEvents(filter);
 	                if (events.size === 0) {
-	                    console.log(`⚠️ No project info found for event ID: ${nostrEventId}`);
-	                    this.setCache(cacheKey, null, 60000); // Cache null for 1 minute
+	                    this.setCache(cacheKey, null, 60000);
 	                    return null;
 	                }
 	                const event = Array.from(events)[0];
 	                const projectInfo = JSON.parse(event.content);
-	                console.log(`✅ Found project info for ${nostrEventId}:`, projectInfo.targetAmount);
 	                if (useCache) {
 	                    this.setCache(cacheKey, projectInfo);
 	                }
 	                return projectInfo;
 	            }
 	            catch (error) {
-	                console.error(`❌ Error fetching project info for ${nostrEventId}:`, error);
 	                return null;
 	            }
 	        });
@@ -20563,41 +20548,32 @@ var AngorHubSDK = (function (exports, axios) {
 	        const cacheKey = this.getCacheKey('profile', nostrPubKey);
 	        if (useCache) {
 	            const cached = this.getFromCache(cacheKey);
-	            if (cached) {
-	                console.log(`📦 Using cached profile metadata for ${nostrPubKey}`);
+	            if (cached)
 	                return cached;
-	            }
 	        }
 	        return this.deduplicateRequest(cacheKey, async () => {
 	            try {
-	                console.log(`👤 Fetching profile metadata for pubkey: ${nostrPubKey}`);
 	                await this.initialize();
-	                if (!this.isInitialized) {
-	                    console.log('❌ Nostr service not initialized, skipping profile fetch');
+	                if (!this.isInitialized)
 	                    return null;
-	                }
 	                const filter = {
 	                    authors: [nostrPubKey],
 	                    kinds: [0],
 	                    limit: 1
 	                };
-	                console.log('📡 Fetching profile from Nostr relays...');
 	                const events = await this.ndk.fetchEvents(filter);
 	                if (events.size === 0) {
-	                    console.log(`⚠️ No profile metadata found for pubkey: ${nostrPubKey}`);
-	                    this.setCache(cacheKey, null, 60000); // Cache null for 1 minute
+	                    this.setCache(cacheKey, null, 60000);
 	                    return null;
 	                }
 	                const event = Array.from(events)[0];
 	                const metadata = JSON.parse(event.content);
-	                console.log(`✅ Found profile metadata for ${nostrPubKey}:`, metadata.name || 'No name');
 	                if (useCache) {
 	                    this.setCache(cacheKey, metadata);
 	                }
 	                return metadata;
 	            }
 	            catch (error) {
-	                console.error(`❌ Error fetching profile metadata for ${nostrPubKey}:`, error);
 	                return null;
 	            }
 	        });
@@ -20614,7 +20590,6 @@ var AngorHubSDK = (function (exports, axios) {
 	        });
 	        try {
 	            await this.initialize();
-	            // Fetch all project info and profile data in parallel
 	            const [projectEvents, profileEvents] = await Promise.all([
 	                allEventIds.size > 0 ? this.ndk.fetchEvents({
 	                    ids: Array.from(allEventIds),
@@ -20625,9 +20600,7 @@ var AngorHubSDK = (function (exports, axios) {
 	                    kinds: [0]
 	                }) : new Set()
 	            ]);
-	            // Process results
 	            const results = new Map();
-	            // Process project events
 	            for (const event of projectEvents) {
 	                try {
 	                    const ndkEvent = event;
@@ -20636,10 +20609,8 @@ var AngorHubSDK = (function (exports, axios) {
 	                    this.setCache(this.getCacheKey('project', ndkEvent.id), projectInfo);
 	                }
 	                catch (error) {
-	                    console.error('Failed to parse project info:', error);
 	                }
 	            }
-	            // Process profile events
 	            for (const event of profileEvents) {
 	                try {
 	                    const ndkEvent = event;
@@ -20648,10 +20619,8 @@ var AngorHubSDK = (function (exports, axios) {
 	                    this.setCache(this.getCacheKey('profile', ndkEvent.pubkey), metadata);
 	                }
 	                catch (error) {
-	                    console.error('Failed to parse profile metadata:', error);
 	                }
 	            }
-	            // Resolve all batch requests
 	            batch.forEach(req => {
 	                try {
 	                    req.resolver(results);
@@ -20689,24 +20658,17 @@ var AngorHubSDK = (function (exports, axios) {
 	        };
 	    }
 	    async enrichProjectsWithNostrData(projects) {
-	        // Add safety check for projects parameter
 	        if (!Array.isArray(projects)) {
-	            console.warn('⚠️ enrichProjectsWithNostrData: projects is not an array:', typeof projects, projects);
 	            return [];
 	        }
 	        if (projects.length === 0)
 	            return projects;
-	        console.log(`🌐 Enriching ${projects.length} projects with Nostr data...`);
-	        // Check if Nostr service is initialized
 	        if (!this.isInitialized) {
-	            console.log('Nostr service not initialized, attempting to initialize...');
 	            await this.initialize();
 	            if (!this.isInitialized) {
-	                console.log('⚠️ Nostr service failed to initialize, returning projects without enrichment');
 	                return projects;
 	            }
 	        }
-	        // Collect all unique event IDs and pub keys
 	        const eventIds = new Set();
 	        const pubKeys = new Set();
 	        projects.forEach(project => {
@@ -20714,11 +20676,8 @@ var AngorHubSDK = (function (exports, axios) {
 	                eventIds.add(project.nostrEventId);
 	            }
 	        });
-	        console.log(`Found ${eventIds.size} unique Nostr event IDs`);
-	        // First, fetch all project info data
 	        const projectInfoMap = new Map();
 	        if (eventIds.size > 0) {
-	            console.log('Fetching project info from Nostr...');
 	            await Promise.all(Array.from(eventIds).map(async (eventId) => {
 	                try {
 	                    const projectInfo = await this.getProjectInfo(eventId);
@@ -20730,15 +20689,11 @@ var AngorHubSDK = (function (exports, axios) {
 	                    }
 	                }
 	                catch (error) {
-	                    console.warn(`Failed to fetch project info for ${eventId}:`, error);
 	                }
 	            }));
 	        }
-	        console.log(`Fetched ${projectInfoMap.size} project info records`);
-	        // Then fetch all profile metadata
 	        const metadataMap = new Map();
 	        if (pubKeys.size > 0) {
-	            console.log('Fetching profile metadata from Nostr...');
 	            await Promise.all(Array.from(pubKeys).map(async (pubKey) => {
 	                try {
 	                    const metadata = await this.getProfileMetadata(pubKey);
@@ -20747,12 +20702,9 @@ var AngorHubSDK = (function (exports, axios) {
 	                    }
 	                }
 	                catch (error) {
-	                    console.warn(`Failed to fetch metadata for ${pubKey}:`, error);
 	                }
 	            }));
 	        }
-	        console.log(`Fetched ${metadataMap.size} profile metadata records`);
-	        // Finally, enrich all projects
 	        const enrichedProjects = projects.map(project => {
 	            if (!project.nostrEventId)
 	                return project;
@@ -20764,8 +20716,6 @@ var AngorHubSDK = (function (exports, axios) {
 	                metadata
 	            };
 	        });
-	        const enrichedCount = enrichedProjects.filter(p => p.projectInfo || p.metadata).length;
-	        console.log(`✅ Enriched ${enrichedCount}/${projects.length} projects with Nostr data`);
 	        return enrichedProjects;
 	    }
 	    clearCache() {
@@ -20812,7 +20762,6 @@ var AngorHubSDK = (function (exports, axios) {
 	            ]
 	        };
 	        this.network = network;
-	        // Get default Nostr relays for the network if none provided
 	        const defaultRelays = this.getDefaultNostrRelays(network);
 	        this.config = {
 	            timeout: config.timeout || 8000,
@@ -20821,14 +20770,13 @@ var AngorHubSDK = (function (exports, axios) {
 	            enableNostr: config.enableNostr !== false,
 	            nostrRelays: ((_a = config.nostrRelays) === null || _a === void 0 ? void 0 : _a.length) ? config.nostrRelays : defaultRelays,
 	            enableCache: config.enableCache !== false,
-	            cacheTtl: config.cacheTtl || 300000, // 5 minutes
+	            cacheTtl: config.cacheTtl || 300000,
 	            maxRetries: config.maxRetries || 3,
 	            retryDelay: config.retryDelay || 1000,
-	            healthCheckInterval: config.healthCheckInterval || 60000, // 1 minute
+	            healthCheckInterval: config.healthCheckInterval || 60000,
 	            enableCompression: config.enableCompression !== false,
 	            concurrentRequests: config.concurrentRequests || 10
 	        };
-	        console.log(`🔗 Initializing ${network} SDK with Nostr relays:`, this.config.nostrRelays);
 	        this.initializeIndexers();
 	        this.initializeNostrService();
 	        this.startHealthChecks();
@@ -20846,7 +20794,6 @@ var AngorHubSDK = (function (exports, axios) {
 	                "wss://relay.orangepill.dev"
 	            ];
 	        }
-	        // Default mainnet relays
 	        return [
 	            "wss://relay.damus.io",
 	            "wss://relay.angor.io"
@@ -20870,16 +20817,13 @@ var AngorHubSDK = (function (exports, axios) {
 	                maxRedirects: 3,
 	                validateStatus: (status) => status < 500,
 	            };
-	            // Browser-safe headers - avoid setting compression headers in browser
 	            if (typeof window !== 'undefined') {
-	                // Browser environment
 	                axiosConfig.headers = {
 	                    'Accept': 'application/json',
 	                    'Content-Type': 'application/json'
 	                };
 	            }
 	            else {
-	                // Node.js environment - can set compression headers
 	                axiosConfig.headers = {
 	                    'Accept': 'application/json',
 	                    'Content-Type': 'application/json'
@@ -21073,7 +21017,6 @@ var AngorHubSDK = (function (exports, axios) {
 	        var _a;
 	        try {
 	            const response = await this.makeRequestWithRetry('projects', { limit, offset }, { useCache });
-	            // Add safety check for response structure
 	            let projects;
 	            if (Array.isArray(response)) {
 	                projects = response;
@@ -21085,7 +21028,6 @@ var AngorHubSDK = (function (exports, axios) {
 	                projects = response.projects;
 	            }
 	            else {
-	                console.warn('⚠️ API response is not in expected format:', response);
 	                throw new Error(`API returned unexpected format. Expected array of projects, got: ${typeof response}`);
 	            }
 	            if (this.nostrService && projects.length > 0) {
@@ -21094,8 +21036,6 @@ var AngorHubSDK = (function (exports, axios) {
 	            return projects;
 	        }
 	        catch (error) {
-	            console.error('❌ Error fetching projects:', error);
-	            // If it's a 404 error, provide more helpful message
 	            if (((_a = error.response) === null || _a === void 0 ? void 0 : _a.status) === 404) {
 	                throw new Error(`Projects endpoint not found (404). This may indicate the ${this.network} indexer is not available or the API endpoint has changed.`);
 	            }

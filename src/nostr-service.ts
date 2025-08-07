@@ -8,9 +8,9 @@ export class NostrService {
   private pendingRequests = new Map<string, Promise<any>>();
   private batchQueue: BatchNostrRequest[] = [];
   private batchTimeout: NodeJS.Timeout | null = null;
-  private readonly BATCH_DELAY = 50; // ms
+  private readonly BATCH_DELAY = 50;
   private readonly BATCH_SIZE = 20;
-  private readonly DEFAULT_CACHE_TTL = 300_000; // 5 minutes
+  private readonly DEFAULT_CACHE_TTL = 300_000;
 
   constructor(
     relays: string[] = [
@@ -24,13 +24,11 @@ export class NostrService {
     try {
       this.ndk = new NDK({
         explicitRelayUrls: relays,
-        enableOutboxModel: false // Disable for better browser compatibility
+        enableOutboxModel: false
       });
     } catch (error) {
-      console.warn('Failed to initialize NDK:', error);
-      // Create a minimal fallback NDK instance
       this.ndk = new NDK({
-        explicitRelayUrls: relays.slice(0, 2) // Use only first 2 relays as fallback
+        explicitRelayUrls: relays.slice(0, 2)
       });
     }
   }
@@ -39,13 +37,9 @@ export class NostrService {
     if (this.isInitialized) return;
     
     try {
-      console.log('Initializing Nostr service...');
       await this.ndk.connect();
       this.isInitialized = true;
-      console.log('✅ Nostr service initialized successfully');
     } catch (error) {
-      console.error('Failed to initialize Nostr service:', error);
-      // Don't throw error, just log it - continue without Nostr
       this.isInitialized = false;
     }
   }
@@ -92,21 +86,13 @@ export class NostrService {
     
     if (useCache) {
       const cached = this.getFromCache<ProjectInfo>(cacheKey);
-      if (cached) {
-        console.log(`📦 Using cached project info for ${nostrEventId}`);
-        return cached;
-      }
+      if (cached) return cached;
     }
 
     return this.deduplicateRequest(cacheKey, async () => {
       try {
-        console.log(`🔍 Fetching project info for event ID: ${nostrEventId}`);
         await this.initialize();
-
-        if (!this.isInitialized) {
-          console.log('❌ Nostr service not initialized, skipping project info fetch');
-          return null;
-        }
+        if (!this.isInitialized) return null;
 
         const filter: NDKFilter = {
           ids: [nostrEventId],
@@ -114,19 +100,15 @@ export class NostrService {
           limit: 1
         };
 
-        console.log('📡 Fetching from Nostr relays...');
         const events = await this.ndk.fetchEvents(filter);
         
         if (events.size === 0) {
-          console.log(`⚠️ No project info found for event ID: ${nostrEventId}`);
-          this.setCache(cacheKey, null, 60_000); // Cache null for 1 minute
+          this.setCache(cacheKey, null, 60_000);
           return null;
         }
 
         const event = Array.from(events)[0];
         const projectInfo = JSON.parse(event.content) as ProjectInfo;
-        
-        console.log(`✅ Found project info for ${nostrEventId}:`, projectInfo.targetAmount);
         
         if (useCache) {
           this.setCache(cacheKey, projectInfo);
@@ -134,7 +116,6 @@ export class NostrService {
         
         return projectInfo;
       } catch (error) {
-        console.error(`❌ Error fetching project info for ${nostrEventId}:`, error);
         return null;
       }
     });
@@ -145,21 +126,13 @@ export class NostrService {
     
     if (useCache) {
       const cached = this.getFromCache<ProjectProfileMetadata>(cacheKey);
-      if (cached) {
-        console.log(`📦 Using cached profile metadata for ${nostrPubKey}`);
-        return cached;
-      }
+      if (cached) return cached;
     }
 
     return this.deduplicateRequest(cacheKey, async () => {
       try {
-        console.log(`👤 Fetching profile metadata for pubkey: ${nostrPubKey}`);
         await this.initialize();
-
-        if (!this.isInitialized) {
-          console.log('❌ Nostr service not initialized, skipping profile fetch');
-          return null;
-        }
+        if (!this.isInitialized) return null;
 
         const filter: NDKFilter = {
           authors: [nostrPubKey],
@@ -167,19 +140,15 @@ export class NostrService {
           limit: 1
         };
 
-        console.log('📡 Fetching profile from Nostr relays...');
         const events = await this.ndk.fetchEvents(filter);
         
         if (events.size === 0) {
-          console.log(`⚠️ No profile metadata found for pubkey: ${nostrPubKey}`);
-          this.setCache(cacheKey, null, 60_000); // Cache null for 1 minute
+          this.setCache(cacheKey, null, 60_000);
           return null;
         }
 
         const event = Array.from(events)[0];
         const metadata = JSON.parse(event.content) as ProjectProfileMetadata;
-        
-        console.log(`✅ Found profile metadata for ${nostrPubKey}:`, metadata.name || 'No name');
         
         if (useCache) {
           this.setCache(cacheKey, metadata);
@@ -187,7 +156,6 @@ export class NostrService {
         
         return metadata;
       } catch (error) {
-        console.error(`❌ Error fetching profile metadata for ${nostrPubKey}:`, error);
         return null;
       }
     });
@@ -208,7 +176,6 @@ export class NostrService {
     try {
       await this.initialize();
 
-      // Fetch all project info and profile data in parallel
       const [projectEvents, profileEvents] = await Promise.all([
         allEventIds.size > 0 ? this.ndk.fetchEvents({
           ids: Array.from(allEventIds),
@@ -220,10 +187,8 @@ export class NostrService {
         }) : new Set()
       ]);
 
-      // Process results
       const results = new Map<string, any>();
 
-      // Process project events
       for (const event of projectEvents) {
         try {
           const ndkEvent = event as NDKEvent;
@@ -231,11 +196,9 @@ export class NostrService {
           results.set(`project:${ndkEvent.id}`, projectInfo);
           this.setCache(this.getCacheKey('project', ndkEvent.id), projectInfo);
         } catch (error) {
-          console.error('Failed to parse project info:', error);
         }
       }
 
-      // Process profile events
       for (const event of profileEvents) {
         try {
           const ndkEvent = event as NDKEvent;
@@ -243,11 +206,9 @@ export class NostrService {
           results.set(`profile:${ndkEvent.pubkey}`, metadata);
           this.setCache(this.getCacheKey('profile', ndkEvent.pubkey), metadata);
         } catch (error) {
-          console.error('Failed to parse profile metadata:', error);
         }
       }
 
-      // Resolve all batch requests
       batch.forEach(req => {
         try {
           req.resolver(results);
@@ -290,27 +251,19 @@ export class NostrService {
   }
 
   async enrichProjectsWithNostrData(projects: any[]): Promise<any[]> {
-    // Add safety check for projects parameter
     if (!Array.isArray(projects)) {
-      console.warn('⚠️ enrichProjectsWithNostrData: projects is not an array:', typeof projects, projects);
       return [];
     }
     
     if (projects.length === 0) return projects;
 
-    console.log(`🌐 Enriching ${projects.length} projects with Nostr data...`);
-
-    // Check if Nostr service is initialized
     if (!this.isInitialized) {
-      console.log('Nostr service not initialized, attempting to initialize...');
       await this.initialize();
       if (!this.isInitialized) {
-        console.log('⚠️ Nostr service failed to initialize, returning projects without enrichment');
         return projects;
       }
     }
 
-    // Collect all unique event IDs and pub keys
     const eventIds = new Set<string>();
     const pubKeys = new Set<string>();
 
@@ -320,12 +273,8 @@ export class NostrService {
       }
     });
 
-    console.log(`Found ${eventIds.size} unique Nostr event IDs`);
-
-    // First, fetch all project info data
     const projectInfoMap = new Map<string, ProjectInfo>();
     if (eventIds.size > 0) {
-      console.log('Fetching project info from Nostr...');
       await Promise.all(
         Array.from(eventIds).map(async (eventId) => {
           try {
@@ -337,18 +286,13 @@ export class NostrService {
               }
             }
           } catch (error) {
-            console.warn(`Failed to fetch project info for ${eventId}:`, error);
           }
         })
       );
     }
 
-    console.log(`Fetched ${projectInfoMap.size} project info records`);
-
-    // Then fetch all profile metadata
     const metadataMap = new Map<string, ProjectProfileMetadata>();
     if (pubKeys.size > 0) {
-      console.log('Fetching profile metadata from Nostr...');
       await Promise.all(
         Array.from(pubKeys).map(async (pubKey) => {
           try {
@@ -357,15 +301,11 @@ export class NostrService {
               metadataMap.set(pubKey, metadata);
             }
           } catch (error) {
-            console.warn(`Failed to fetch metadata for ${pubKey}:`, error);
           }
         })
       );
     }
 
-    console.log(`Fetched ${metadataMap.size} profile metadata records`);
-
-    // Finally, enrich all projects
     const enrichedProjects = projects.map(project => {
       if (!project.nostrEventId) return project;
 
@@ -378,9 +318,6 @@ export class NostrService {
         metadata
       };
     });
-
-    const enrichedCount = enrichedProjects.filter(p => p.projectInfo || p.metadata).length;
-    console.log(`✅ Enriched ${enrichedCount}/${projects.length} projects with Nostr data`);
 
     return enrichedProjects;
   }
