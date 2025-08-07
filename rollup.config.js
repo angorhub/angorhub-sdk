@@ -16,7 +16,24 @@ const config = {
       tsconfig: './tsconfig.json',
       useTsconfigDeclarationDir: true
     })
-  ]
+  ],
+  // Suppress warnings
+  onwarn: (warning, warn) => {
+    // Suppress eval warnings from dependencies
+    if (warning.code === 'EVAL' && warning.message.includes('tseep')) {
+      return;
+    }
+    
+    // Suppress other common warnings from dependencies
+    if (warning.code === 'THIS_IS_UNDEFINED' || 
+        warning.code === 'CIRCULAR_DEPENDENCY' ||
+        warning.message.includes('Use of eval is strongly discouraged')) {
+      return;
+    }
+    
+    // Use default for everything else
+    warn(warning);
+  }
 };
 
 export default defineConfig([

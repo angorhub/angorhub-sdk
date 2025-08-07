@@ -51,8 +51,7 @@ export class AngorHubSDK {
       { url: 'https://electrs.angor.online/', isPrimary: false, priority: 2 },
     ],
     testnet: [
-      { url: 'https://test.indexer.angor.io/', isPrimary: true, priority: 1 },
-      { url: 'https://signet.angor.online/', isPrimary: false, priority: 2 }
+      { url: 'https://signet.angor.online/', isPrimary: true, priority: 1 }
     ]
   };
 
