@@ -1,0 +1,2037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AngorHub SDK - Complete Documentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Prism.js for syntax highlighting -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f8f9fa;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 2rem 0;
+      text-align: center;
+      margin-bottom: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      font-size: 1.2rem;
+      opacity: 0.9;
+    }
+
+    nav {
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 2rem;
+      position: sticky;
+      top: 20px;
+      z-index: 100;
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+    }
+
+    nav a {
+      color: #667eea;
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+
+    nav a:hover {
+      background: #667eea;
+      color: white;
+    }
+
+    .section {
+      background: white;
+      margin-bottom: 2rem;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+    }
+
+    h2 {
+      color: #2c3e50;
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 3px solid #667eea;
+    }
+
+    h3 {
+      color: #34495e;
+      font-size: 1.5rem;
+      margin: 2rem 0 1rem 0;
+    }
+
+    h4 {
+      color: #555;
+      font-size: 1.2rem;
+      margin: 1.5rem 0 0.5rem 0;
+    }
+
+    .code-block {
+      background: #2d3748 !important;
+      color: #e2e8f0 !important;
+      padding: 1.5rem !important;
+      border-radius: 8px !important;
+      overflow-x: auto !important;
+      margin: 1rem 0 !important;
+      position: relative !important;
+      font-family: 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace !important;
+      line-height: 1.6 !important;
+      border: 1px solid #4a5568 !important;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+      font-size: 14px !important;
+    }
+
+    .code-block pre {
+      background: transparent !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: none !important;
+      border-radius: 0 !important;
+      overflow: visible !important;
+    }
+
+    .code-block code {
+      background: transparent !important;
+      color: inherit !important;
+      font-family: inherit !important;
+      font-size: inherit !important;
+      line-height: inherit !important;
+      padding: 0 !important;
+      border: none !important;
+    }
+
+    .code-block::before {
+      content: attr(data-lang);
+      position: absolute;
+      top: 0.5rem;
+      right: 1rem;
+      background: #667eea;
+      color: white;
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      font-weight: bold;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      z-index: 10;
+    }
+
+    /* Language-specific background colors for tags */
+    .code-block[data-lang="javascript"]::before {
+      background: #f7df1e;
+      color: #000;
+    }
+    
+    .code-block[data-lang="typescript"]::before {
+      background: #3178c6;
+      color: white;
+    }
+    
+    .code-block[data-lang="bash"]::before {
+      background: #4eaa25;
+      color: white;
+    }
+    
+    .code-block[data-lang="html"]::before {
+      background: #e34f26;
+      color: white;
+    }
+
+    /* Override Prism styles for better appearance */
+    .token.keyword {
+      color: #c792ea !important;
+      font-weight: bold !important;
+    }
+    
+    .token.string {
+      color: #a5e844 !important;
+    }
+    
+    .token.comment {
+      color: #636f88 !important;
+      font-style: italic !important;
+    }
+    
+    .token.function {
+      color: #82aaff !important;
+    }
+    
+    .token.number {
+      color: #f78c6c !important;
+    }
+    
+    .token.operator {
+      color: #89ddff !important;
+    }
+    
+    .token.punctuation {
+      color: #89ddff !important;
+    }
+
+    .inline-code {
+      background: #f6f8fa;
+      color: #d73a49;
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-family: 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-size: 0.9em;
+      border: 1px solid #e1e4e8;
+    }
+
+    .example-container {
+      border: 2px solid #e1e5e9;
+      border-radius: 8px;
+      margin: 1.5rem 0;
+      overflow: hidden;
+    }
+
+    .example-header {
+      background: #f8f9fa;
+      padding: 1rem;
+      border-bottom: 1px solid #e1e5e9;
+      font-weight: bold;
+      color: #495057;
+    }
+
+    .example-body {
+      padding: 1.5rem;
+    }
+
+    .demo-area {
+      background: #f8f9fa;
+      border: 2px dashed #dee2e6;
+      border-radius: 8px;
+      padding: 2rem;
+      margin: 1rem 0;
+      text-align: center;
+    }
+
+    .btn {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+      margin: 0.5rem;
+      transition: all 0.3s ease;
+    }
+
+    .btn:hover {
+      background: #5a6fd8;
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+    }
+
+    .btn-secondary:hover {
+      background: #5a6268;
+    }
+
+    .alert {
+      padding: 1rem;
+      border-radius: 5px;
+      margin: 1rem 0;
+      border-left: 4px solid;
+    }
+
+    .alert-info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border-color: #17a2b8;
+    }
+
+    .alert-warning {
+      background: #fff3cd;
+      color: #856404;
+      border-color: #ffc107;
+    }
+
+    .alert-success {
+      background: #d4edda;
+      color: #155724;
+      border-color: #28a745;
+    }
+
+    .config-demo {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin: 2rem 0;
+    }
+
+    .config-options {
+      background: #f8f9fa;
+      padding: 1.5rem;
+      border-radius: 8px;
+      border: 1px solid #dee2e6;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: #495057;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .result-area {
+      background: #2d3748;
+      color: #e2e8f0;
+      padding: 1rem;
+      border-radius: 8px;
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      white-space: pre-wrap;
+      min-height: 200px;
+      overflow-y: auto;
+    }
+
+    .status {
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      margin: 0.5rem 0;
+      font-weight: bold;
+    }
+
+    .status-loading {
+      background: #cce5ff;
+      color: #004085;
+    }
+
+    .status-success {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .status-error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin: 2rem 0;
+    }
+
+    .feature-card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      border: 1px solid #e1e5e9;
+      text-align: center;
+      transition: transform 0.3s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    .feature-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 2px solid #e1e5e9;
+      margin-bottom: 1rem;
+    }
+
+    .tab {
+      padding: 1rem 2rem;
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-size: 1rem;
+      color: #6c757d;
+      transition: all 0.3s ease;
+    }
+
+    .tab.active {
+      color: #667eea;
+      border-bottom: 2px solid #667eea;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      .config-demo {
+        grid-template-columns: 1fr;
+      }
+
+      nav ul {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .demo-input {
+      margin: 0.5rem;
+      padding: 0.5rem;
+      width: 300px;
+    }
+
+    .demo-output {
+      margin-top: 1rem;
+      text-align: left;
+    }
+
+    .support-list {
+      margin: 0.5rem 0;
+      padding-left: 1.5rem;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 2rem;
+      color: #6c757d;
+      border-top: 1px solid #e1e5e9;
+      margin-top: 3rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🚀 AngorHub SDK</h1>
+      <p class="subtitle">Complete Guide & Interactive Examples</p>
+    </header>
+
+    <nav>
+      <ul>
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#installation">Installation</a></li>
+        <li><a href="#quickstart">Quick Start</a></li>
+        <li><a href="#configuration">Configuration</a></li>
+        <li><a href="#examples">Examples</a></li>
+        <li><a href="#api">API Reference</a></li>
+        <li><a href="#frameworks">Frameworks</a></li>
+        <li><a href="#troubleshooting">Troubleshooting</a></li>
+      </ul>
+    </nav>
+
+    <!-- Overview Section -->
+    <section id="overview" class="section">
+      <h2>📖 Overview</h2>
+      <p>AngorHub SDK is a comprehensive TypeScript/JavaScript library for interacting with the Angor ecosystem. It provides seamless access to project data, investment information, and Nostr integration with support for both mainnet and testnet networks.</p>
+      
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🌐</div>
+          <h4>Multi-Network Support</h4>
+          <p>Works with both mainnet and testnet networks</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⚙️</div>
+          <h4>Flexible Configuration</h4>
+          <p>Remote, manual, or default configuration modes</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔗</div>
+          <h4>Nostr Integration</h4>
+          <p>Enhanced project data with Nostr enrichment</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <h4>High Performance</h4>
+          <p>Built-in caching and concurrent request handling</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔧</div>
+          <h4>TypeScript Support</h4>
+          <p>Full type safety and IntelliSense support</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📱</div>
+          <h4>Universal Compatibility</h4>
+          <p>Works in browsers, Node.js, React, Angular, and more</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Installation Section -->
+    <section id="installation" class="section">
+      <h2>📦 Installation</h2>
+      
+      <h3>NPM Installation</h3>
+      <div class="code-block" data-lang="bash">npm install angorhub-sdk</div>
+      
+      <h3>Yarn Installation</h3>
+      <div class="code-block" data-lang="bash">yarn add angorhub-sdk</div>
+      
+      <h3>CDN Usage (Browser)</h3>
+      <div class="code-block" data-lang="html">&lt;script src="https://cdn.jsdelivr.net/npm/angorhub-sdk@latest/dist/browser/angorhub-sdk.bundle.js"&gt;&lt;/script&gt;</div>
+      
+      <div class="alert alert-info">
+        <strong>Note:</strong> For browser usage, the SDK is available as <code class="inline-code">AngorHubSDK</code> global variable when using CDN.
+      </div>
+    </section>
+
+    <!-- Quick Start Section -->
+    <section id="quickstart" class="section">
+      <h2>🚀 Quick Start</h2>
+      <p>Get started with AngorHub SDK in just a few lines of code:</p>
+      
+      <div class="example-container">
+        <div class="example-header">Basic Example</div>
+        <div class="example-body">
+          <div class="code-block" data-lang="javascript">import { AngorHubSDK } from 'angorhub-sdk';
+
+// Function to wait for SDK to be ready
+async function initializeSDK(network = 'mainnet', config = {}) {
+  const sdk = new AngorHubSDK(network, config);
+  
+  // Wait for SDK initialization by checking health status
+  let attempts = 0;
+  while (attempts < 10) {
+    try {
+      const health = sdk.getHealthStatus();
+      if (health.healthyCount > 0) {
+        break; // SDK is ready
+      }
+    } catch (error) {
+      // SDK not ready yet
+    }
+    
+    await new Promise(resolve => setTimeout(resolve, 500));
+    attempts++;
+  }
+  
+  return sdk;
+}
+
+// Initialize and use SDK
+const sdk = await initializeSDK('mainnet');
+
+// Fetch first 10 projects
+const projects = await sdk.getProjects(10);
+console.log('Projects:', projects);
+
+// Get specific project details
+const projectId = projects[0].projectIdentifier;
+const projectDetails = await sdk.getProject(projectId);
+console.log('Project details:', projectDetails);
+
+// Get project statistics
+const stats = await sdk.getProjectStats(projectId);
+console.log('Project stats:', stats);</div>
+        </div>
+      </div>
+
+      <div class="example-container">
+        <div class="example-header">Testnet Example</div>
+        <div class="example-body">
+          <div class="code-block" data-lang="javascript">// Initialize SDK for testnet with custom configuration
+const testnetSdk = new AngorHubSDK('testnet', {
+  enableNostr: true,
+  enableCache: true,
+  cacheTtl: 300000, // 5 minutes cache
+  maxRetries: 3,
+  timeout: 10000
+});
+
+// Wait for SDK initialization
+await new Promise(resolve => setTimeout(resolve, 2000));
+
+// Get testnet projects
+const testnetProjects = await testnetSdk.getProjects(5);
+console.log('Testnet projects:', testnetProjects);</div>
+        </div>
+      </div>
+
+      <div class="example-container">
+        <div class="example-header">With Error Handling</div>
+        <div class="example-body">
+          <div class="code-block" data-lang="javascript">try {
+  const sdk = new AngorHubSDK('mainnet');
+  
+  // Wait for SDK initialization
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  
+  // Get projects with pagination
+  const projects = await sdk.getProjects(10, 0);
+  
+  if (projects.length > 0) {
+    const firstProject = await sdk.getProject(projects[0].projectIdentifier);
+    console.log('First project:', firstProject);
+    
+    // Get project investments
+    const investments = await sdk.getProjectInvestments(projects[0].projectIdentifier, 5);
+    console.log('Investments:', investments);
+  } else {
+    console.log('No projects found');
+  }
+  
+} catch (error) {
+  console.error('SDK Error:', error.message);
+}</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Configuration Section -->
+    <section id="configuration" class="section">
+      <h2>⚙️ Configuration Modes</h2>
+      <p>AngorHub SDK supports three configuration modes to suit different use cases:</p>
+      
+      <h3>1. Remote Configuration (Default)</h3>
+      <p>Automatically fetches indexer and relay configurations from a remote service.</p>
+      <div class="code-block" data-lang="javascript">import { AngorHubSDK } from 'angorhub-sdk';
+
+const sdk = new AngorHubSDK('mainnet', {
+  configMode: 'remote',
+  configServiceUrl: 'https://angorhub.github.io/lists' // Optional: custom URL
+});</div>
+
+      <h3>2. Manual Configuration</h3>
+      <p>Provide your own indexer and relay endpoints.</p>
+      <div class="code-block" data-lang="javascript">const sdk = new AngorHubSDK('mainnet', {
+  configMode: 'manual',
+  manualIndexers: {
+    mainnet: ['https://api.angor.io'],
+    testnet: ['https://api-testnet.angor.io']
+  },
+  manualRelays: 'wss://relay.damus.io,wss://nos.lol'
+});</div>
+
+      <h3>3. Default Configuration</h3>
+      <p>Uses built-in default endpoints.</p>
+      <div class="code-block" data-lang="javascript">const sdk = new AngorHubSDK('mainnet', {
+  configMode: 'default'
+});</div>
+
+      <!-- Interactive Configuration Demo -->
+      <h3>🎮 Interactive Configuration Demo</h3>
+      <div class="config-demo">
+        <div class="config-options">
+          <h4>Configuration Settings</h4>
+          <div class="form-group">
+            <label for="demoNetwork">Network:</label>
+            <select id="demoNetwork">
+              <option value="mainnet">Mainnet</option>
+              <option value="testnet">Testnet</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="demoConfigMode">Configuration Mode:</label>
+            <select id="demoConfigMode">
+              <option value="remote">Remote (Fetch from Service)</option>
+              <option value="manual">Manual (User Provided)</option>
+              <option value="default">Default (SDK Defaults)</option>
+            </select>
+          </div>
+          
+          <div id="remoteConfigGroup" class="form-group">
+            <label for="demoConfigUrl">Config Service URL (optional):</label>
+            <input type="url" id="demoConfigUrl" placeholder="https://angorhub.github.io/lists">
+          </div>
+          
+          <div id="manualConfigGroup" class="hidden">
+            <div class="form-group">
+              <label for="demoMainnetIndexers">Mainnet Indexers:</label>
+              <textarea id="demoMainnetIndexers" placeholder="https://api.angor.io,https://api2.angor.io"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="demoTestnetIndexers">Testnet Indexers:</label>
+              <textarea id="demoTestnetIndexers" placeholder="https://api-testnet.angor.io"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="demoRelays">Nostr Relays:</label>
+              <textarea id="demoRelays" placeholder="wss://relay.damus.io,wss://nos.lol"></textarea>
+            </div>
+          </div>
+          
+          <button class="btn" onclick="initializeDemoSDK()">Initialize SDK</button>
+          <button class="btn btn-secondary" onclick="getConfigInfo()">Get Config Info</button>
+        </div>
+        
+        <div>
+          <h4>SDK Status & Output</h4>
+          <div id="demoStatus" class="status status-loading hidden">Ready to initialize...</div>
+          <div id="demoResult" class="result-area">Click "Initialize SDK" to start...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Examples Section -->
+    <section id="examples" class="section">
+      <h2>💡 Usage Examples</h2>
+      
+      <div class="tabs">
+        <button class="tab active" onclick="showTab('basic')">Basic Usage</button>
+        <button class="tab" onclick="showTab('projects')">Projects API</button>
+        <button class="tab" onclick="showTab('investments')">Investments API</button>
+        <button class="tab" onclick="showTab('nostr')">Nostr Integration</button>
+      </div>
+
+      <!-- Basic Usage Tab -->
+      <div id="basic" class="tab-content active">
+        <h3>Basic SDK Initialization</h3>
+        <div class="example-container">
+          <div class="example-header">Node.js / ES Modules</div>
+          <div class="example-body">
+            <div class="code-block" data-lang="javascript">import { AngorHubSDK } from 'angorhub-sdk';
+
+// Initialize SDK for mainnet
+const sdk = new AngorHubSDK('mainnet');
+
+// Initialize with custom configuration
+const customSdk = new AngorHubSDK('testnet', {
+  enableNostr: true,
+  enableCache: true,
+  cacheTtl: 300000, // 5 minutes
+  maxRetries: 3,
+  timeout: 10000
+});</div>
+          </div>
+        </div>
+
+        <div class="example-container">
+          <div class="example-header">Browser / Global Variable</div>
+          <div class="example-body">
+            <div class="code-block" data-lang="html">&lt;script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"&gt;&lt;/script&gt;
+&lt;script src="https://cdn.jsdelivr.net/npm/angorhub-sdk@latest/dist/browser/angorhub-sdk.bundle.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  // SDK is available as AngorHubSDK.AngorHubSDK
+  const sdk = new AngorHubSDK.AngorHubSDK('mainnet');
+&lt;/script&gt;</div>
+          </div>
+        </div>
+
+        <div class="example-container">
+          <div class="example-header">CommonJS</div>
+          <div class="example-body">
+            <div class="code-block" data-lang="javascript">const { AngorHubSDK } = require('angorhub-sdk');
+
+const sdk = new AngorHubSDK('mainnet');</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Projects API Tab -->
+      <div id="projects" class="tab-content">
+        <h3>Working with Projects</h3>
+        
+        <div class="example-container">
+          <div class="example-header">Get Projects List</div>
+          <div class="example-body">
+            <div class="code-block" data-lang="javascript">// Get first 10 projects
+const projects = await sdk.getProjects(10, 0);
+console.log(`Found ${projects.length} projects`);
+
+// Get specific project by ID
+const projectId = 'angor1qe8swvv3xu9dnf3q9q8v6cvc7x60kwums7c5r37';
+const project = await sdk.getProject(projectId);
+console.log('Project details:', project);
+
+// Get project statistics
+const stats = await sdk.getProjectStats(projectId);
+console.log('Project stats:', stats);</div>
+          </div>
+        </div>
+
+        <div class="example-container">
+          <div class="example-header">Testnet Projects</div>
+          <div class="example-body">
+            <div class="code-block" data-lang="javascript">// Initialize testnet SDK
+const testnetSdk = new AngorHubSDK('testnet');
+
+// Get testnet projects
+const testnetProjects = await testnetSdk.getTestnetProjects(5);
+console.log('Testnet projects:', testnetProjects);</div>
+          </div>
+        </div>
+
+        <!-- Interactive Projects Demo -->
+        <div class="demo-area">
+          <h4>🎮 Interactive Projects Demo</h4>
+          <button class="btn" onclick="demoGetProjects()">Get Projects</button>
+          <button class="btn" onclick="demoGetTestnetProjects()">Get Testnet Projects</button>
+          <div id="projectsOutput" class="result-area demo-output">Click a button to fetch projects...</div>
+        </div>
+      </div>
+
+      <!-- Investments API Tab -->
+      <div id="investments" class="tab-content">
+        <h3>Investment Data</h3>
+        
+        <div class="example-container">
+          <div class="example-header">Get Project Investments</div>
+          <div class="example-body">
+            <div class="code-block" data-lang="javascript">const projectId = 'angor1qe8swvv3xu9dnf3q9q8v6cvc7x60kwums7c5r37';
+
+// Get all investments for a project
+const investments = await sdk.getProjectInvestments(projectId, 50, 0);
+
+investments.forEach((investment, index) => {
+  console.log(`Investment ${index + 1}:`);
+  console.log(`  Investor: ${investment.investorPublicKey}`);
+  console.log(`  Amount: ${investment.totalAmount}`);
+  console.log(`  Transaction: ${investment.transactionId}`);
+  console.log(`  Is Seeder: ${investment.isSeeder}`);
+});</div>
+          </div>
+        </div>
+
+        <div class="example-container">
+          <div class="example-header">Get Specific Investor Investment</div>
+          <div class="example-body">
+            <div class="code-block" data-lang="javascript">const projectId = 'angor1qe8swvv3xu9dnf3q9q8v6cvc7x60kwums7c5r37';
+const investorPublicKey = '0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798';
+
+try {
+  const investment = await sdk.getInvestorInvestment(projectId, investorPublicKey);
+  console.log('Investor investment:', investment);
+} catch (error) {
+  console.log('No investment found for this investor');
+}</div>
+          </div>
+        </div>
+
+        <!-- Interactive Investments Demo -->
+        <div class="demo-area">
+          <h4>🎮 Interactive Investments Demo</h4>
+          <input type="text" id="investmentProjectId" placeholder="Enter Project ID" class="demo-input">
+          <br>
+          <button class="btn" onclick="demoGetInvestments()">Get Investments</button>
+          <div id="investmentsOutput" class="result-area demo-output">Enter a project ID and click "Get Investments"...</div>
+        </div>
+      </div>
+
+      <!-- Nostr Integration Tab -->
+      <div id="nostr" class="tab-content">
+        <h3>Nostr Integration</h3>
+        
+        <div class="alert alert-info">
+          <strong>Nostr Enhancement:</strong> The SDK automatically enriches project data with Nostr metadata when enabled, providing additional information like project descriptions, founder profiles, and social links.
+        </div>
+
+        <div class="example-container">
+          <div class="example-header">Enable Nostr Enrichment</div>
+          <div class="example-body">
+            <div class="code-block" data-lang="javascript">const sdk = new AngorHubSDK('mainnet', {
+  enableNostr: true,
+  configMode: 'remote' // Uses remote relay configuration
+});
+
+// Projects will automatically include Nostr data
+const projects = await sdk.getProjects();
+
+projects.forEach(project => {
+  // Basic project data
+  console.log('Project ID:', project.projectIdentifier);
+  console.log('Founder:', project.founderKey);
+  
+  // Enhanced Nostr data (if available)
+  if (project.projectInfo) {
+    console.log('Target Amount:', project.projectInfo.targetAmount);
+    console.log('Start Date:', new Date(project.projectInfo.startDate * 1000));
+    console.log('End Date:', new Date(project.projectInfo.endDate * 1000));
+  }
+  
+  if (project.metadata) {
+    console.log('Project Name:', project.metadata.name);
+    console.log('Description:', project.metadata.about);
+    console.log('Website:', project.metadata.website);
+    console.log('Picture:', project.metadata.picture);
+  }
+});</div>
+          </div>
+        </div>
+
+        <div class="example-container">
+          <div class="example-header">Manual Nostr Enrichment</div>
+          <div class="example-body">
+            <div class="code-block" data-lang="javascript">// Get projects without automatic enrichment
+const plainProjects = await sdk.getProjects();
+
+// Manually enrich specific projects
+const enrichedProjects = await sdk.enrichProjectsWithNostr(plainProjects.slice(0, 5));
+
+console.log('Enriched projects:', enrichedProjects);</div>
+          </div>
+        </div>
+
+        <!-- Interactive Nostr Demo -->
+        <div class="demo-area">
+          <h4>🎮 Interactive Nostr Demo</h4>
+          <button class="btn" onclick="demoNostrEnrichment()">Test Nostr Enrichment</button>
+          <div id="nostrOutput" class="result-area demo-output">Click "Test Nostr Enrichment" to see enhanced data...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- API Reference Section -->
+    <section id="api" class="section">
+      <h2>📚 API Reference</h2>
+      
+      <h3>Constructor</h3>
+      <div class="code-block" data-lang="typescript">new AngorHubSDK(
+  network: 'mainnet' | 'testnet', 
+  config?: SDKConfig
+)</div>
+      
+      <h4>SDKConfig Interface</h4>
+      <div class="code-block" data-lang="typescript">interface SDKConfig {
+  configMode?: 'remote' | 'manual' | 'default'; // Default: 'remote'
+  configServiceUrl?: string; // Default: 'https://angorhub.github.io/lists'
+  manualIndexers?: {
+    mainnet?: string[];
+    testnet?: string[];
+  };
+  manualRelays?: string; // Comma-separated relay URLs
+  enableNostr?: boolean; // Default: true
+  enableCache?: boolean; // Default: true
+  cacheTtl?: number; // Default: 300000 (5 minutes)
+  maxRetries?: number; // Default: 2
+  timeout?: number; // Default: 8000ms
+  enableCompression?: boolean; // Default: false
+  concurrentRequests?: number; // Default: 8
+}</div>
+
+      <h3>Core Methods</h3>
+      
+      <h4>Project Methods</h4>
+      <div class="code-block" data-lang="typescript">// Get projects list with pagination
+async getProjects(limit = 10, offset = 0, useCache = true): Promise&lt;AngorProject[]&gt;
+
+// Get specific project details
+async getProject(projectId: string, useCache = true): Promise&lt;AngorProjectDetails&gt;
+
+// Get project statistics
+async getProjectStats(projectId: string, useCache = true): Promise&lt;AngorProjectStats&gt;
+
+// Get multiple projects at once
+async getMultipleProjects(projectIds: string[], useCache = true): Promise&lt;AngorProjectDetails[]&gt;
+
+// Get multiple project statistics at once
+async getMultipleProjectStats(projectIds: string[], useCache = true): Promise&lt;AngorProjectStats[]&gt;</div>
+
+      <div class="example-container">
+        <div class="example-header">Project Methods Usage Examples</div>
+        <div class="example-body">
+          <div class="code-block" data-lang="javascript">// Basic project fetching
+const projects = await sdk.getProjects(5, 0);
+console.log(`Fetched ${projects.length} projects`);
+
+// Get specific project with details
+const projectId = 'angor1qe8swvv3xu9dnf3q9q8v6cvc7x60kwums7c5r37';
+const project = await sdk.getProject(projectId);
+console.log('Project:', project.projectName);
+
+// Get project statistics
+const stats = await sdk.getProjectStats(projectId);
+console.log(`Target: ${stats.targetAmount}, Invested: ${stats.investedAmount}`);
+
+// Batch fetch multiple projects
+const projectIds = ['angor1qe8swvv3xu9dnf3q9q8v6cvc7x60kwums7c5r37', 'angor1qwq68qqe38m37nqp75ut227sjyack49d4d5ntfv'];
+const multipleProjects = await sdk.getMultipleProjects(projectIds);
+console.log('Fetched multiple projects:', multipleProjects.length);</div>
+        </div>
+      </div>
+
+      <h4>Investment Methods</h4>
+      <div class="code-block" data-lang="typescript">// Get project investments with pagination
+async getProjectInvestments(
+  projectId: string, 
+  limit = 10, 
+  offset = 0, 
+  useCache = true
+): Promise&lt;AngorInvestment[]&gt;
+
+// Get specific investor investment
+async getInvestorInvestment(
+  projectId: string, 
+  investorPublicKey: string, 
+  useCache = true
+): Promise&lt;AngorInvestment&gt;</div>
+
+      <div class="example-container">
+        <div class="example-header">Investment Methods Usage Examples</div>
+        <div class="example-body">
+          <div class="code-block" data-lang="javascript">// Get project investments
+const projectId = 'angor1qe8swvv3xu9dnf3q9q8v6cvc7x60kwums7c5r37';
+const investments = await sdk.getProjectInvestments(projectId, 10, 0);
+console.log(`Found ${investments.length} investments`);
+
+// Get specific investor's investment
+const investorKey = '03ff751a5557df3daa4526b0056124e43d9b3205f491f4299c8fa584291b3c3bf0';
+const investment = await sdk.getInvestorInvestment(projectId, investorKey);
+console.log('Investment amount:', investment.investedAmount);
+
+// Paginate through all investments
+let allInvestments = [];
+let offset = 0;
+const limit = 20;
+
+while (true) {
+  const batch = await sdk.getProjectInvestments(projectId, limit, offset);
+  if (batch.length === 0) break;
+  
+  allInvestments.push(...batch);
+  offset += limit;
+}
+
+console.log(`Total investments found: ${allInvestments.length}`);</div>
+        </div>
+      </div>
+
+      <h4>Nostr Methods</h4>
+      <div class="code-block" data-lang="typescript">// Enrich projects with Nostr data
+enrichProjectsWithNostr(projects: Project[]): Promise&lt;Project[]&gt;</div>
+
+      <h4>Configuration Methods</h4>
+      <div class="code-block" data-lang="typescript">// Update configuration at runtime
+async updateConfiguration(
+  configMode: 'remote' | 'manual' | 'default', 
+  options?: {
+    configServiceUrl?: string;
+    manualIndexers?: { mainnet?: string[]; testnet?: string[] };
+    manualRelays?: string;
+  }
+): Promise&lt;void&gt;
+
+// Refresh remote configuration
+async refreshConfiguration(): Promise&lt;void&gt;
+
+// Get current configuration info
+getConfigurationInfo(): {
+  mode: ConfigMode;
+  serviceUrl: string;
+  indexers: IndexerService[];
+  relaysCount: number;
+  network: string;
+}</div>
+
+      <div class="example-container">
+        <div class="example-header">Configuration Methods Usage Examples</div>
+        <div class="example-body">
+          <div class="code-block" data-lang="javascript">// Switch to manual configuration
+await sdk.updateConfiguration('manual', {
+  manualIndexers: {
+    mainnet: ['https://api.angor.io', 'https://backup.angor.io'],
+    testnet: ['https://testnet-api.angor.io']
+  },
+  manualRelays: 'wss://relay.damus.io,wss://nos.lol'
+});
+
+// Switch to remote configuration with custom service URL
+await sdk.updateConfiguration('remote', {
+  configServiceUrl: 'https://my-custom-config.example.com'
+});
+
+// Switch to default configuration
+await sdk.updateConfiguration('default');
+
+// Get current configuration info
+const configInfo = sdk.getConfigurationInfo();
+console.log('Current mode:', configInfo.mode);
+console.log('Active indexers:', configInfo.indexers.length);
+console.log('Nostr relays count:', configInfo.relaysCount);
+
+// Refresh configuration (useful for remote mode)
+await sdk.refreshConfiguration();
+console.log('Configuration refreshed');</div>
+        </div>
+      </div>
+
+      <h4>Utility Methods</h4>
+      <div class="code-block" data-lang="typescript">// Get indexer health status
+getHealthStatus(): { 
+  indexers: IndexerHealth[]; 
+  healthyCount: number; 
+}
+
+// Get cache statistics
+getCacheStats(): { 
+  sdkCache: { size: number; keys: string[] }; 
+  nostrCache?: { size: number; keys: string[] }; 
+}
+
+// Get general SDK configuration and status
+getConfigInfo(): {
+  network: string;
+  config: SDKConfig;
+  currentHealthyIndexers: number;
+  totalIndexers: number;
+  cacheSize: number;
+  activeRequests: number;
+  queuedRequests: number;
+  timestamp: string;
+}
+
+// Clear all caches
+clearCache(): void
+
+// Clean up resources (call when done)
+destroy(): void</div>
+
+      <div class="example-container">
+        <div class="example-header">Utility Methods Usage Examples</div>
+        <div class="example-body">
+          <div class="code-block" data-lang="javascript">// Check indexer health
+const health = sdk.getHealthStatus();
+console.log(`Healthy indexers: ${health.healthyCount}/${health.indexers.length}`);
+
+health.indexers.forEach(indexer => {
+  console.log(`${indexer.url}: ${indexer.isHealthy ? 'OK' : 'FAILED'} (${indexer.responseTime}ms)`);
+});
+
+// Monitor cache usage
+const cacheStats = sdk.getCacheStats();
+console.log(`SDK cache size: ${cacheStats.sdkCache.size} entries`);
+if (cacheStats.nostrCache) {
+  console.log(`Nostr cache size: ${cacheStats.nostrCache.size} entries`);
+}
+
+// Get detailed SDK status
+const sdkInfo = sdk.getConfigInfo();
+console.log('SDK Status:', {
+  network: sdkInfo.network,
+  mode: sdkInfo.config.configMode,
+  healthyIndexers: sdkInfo.currentHealthyIndexers,
+  cacheSize: sdkInfo.cacheSize,
+  activeRequests: sdkInfo.activeRequests
+});
+
+// Clear cache when needed
+sdk.clearCache();
+console.log('Cache cleared');
+
+// Clean up when done (important for proper cleanup)
+sdk.destroy();</div>
+        </div>
+      </div>
+
+      <h3>Type Definitions</h3>
+      
+      <h4>Project Interface</h4>
+      <div class="code-block" data-lang="typescript">interface Project {
+  projectIdentifier: string;
+  founderKey: string;
+  createdOnBlock: number;
+  trxId: string;
+  nostrEventId: string;
+  totalInvestmentsCount?: number;
+  projectInfo?: {
+    nostrPubKey: string;
+    targetAmount: number;
+    startDate: number;
+    endDate: number;
+    penaltyDays: number;
+    stages: any[];
+    projectSeeders: any[];
+  };
+  metadata?: {
+    name?: string;
+    display_name?: string;
+    about?: string;
+    website?: string;
+    picture?: string;
+    nip05?: string;
+    lud16?: string;
+    banner?: string;
+  };
+}</div>
+
+      <h4>Investment Interface</h4>
+      <div class="code-block" data-lang="typescript">interface Investment {
+  investorPublicKey: string;
+  totalAmount: number;
+  transactionId: string;
+  isSeeder: boolean;
+}</div>
+    </section>
+
+    <!-- Frameworks Section -->
+    <section id="frameworks" class="section">
+      <h2>🔧 Framework Integration</h2>
+      
+      <h3>React Integration</h3>
+      <div class="code-block" data-lang="jsx">import React, { useState, useEffect } from 'react';
+import { AngorHubSDK } from 'angorhub-sdk';
+
+function ProjectsList() {
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const sdk = new AngorHubSDK('mainnet');
+        const projectsData = await sdk.getProjects(10);
+        setProjects(projectsData);
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchProjects();
+  }, []);
+  
+  if (loading) return &lt;div&gt;Loading projects...&lt;/div&gt;;
+  
+  return (
+    &lt;div&gt;
+      &lt;h2&gt;Projects ({projects.length})&lt;/h2&gt;
+      {projects.map(project =&gt; (
+        &lt;div key={project.projectIdentifier}&gt;
+          &lt;h3&gt;{project.metadata?.name || project.projectIdentifier}&lt;/h3&gt;
+          &lt;p&gt;Founder: {project.founderKey}&lt;/p&gt;
+          {project.metadata?.about && &lt;p&gt;{project.metadata.about}&lt;/p&gt;}
+        &lt;/div&gt;
+      ))}
+    &lt;/div&gt;
+  );
+}</div>
+
+      <h3>Angular Integration</h3>
+      <div class="code-block" data-lang="typescript">import { Component, OnInit } from '@angular/core';
+import { AngorHubSDK } from 'angorhub-sdk';
+
+@Component({
+  selector: 'app-projects',
+  template: `
+    &lt;div *ngIf="loading"&gt;Loading projects...&lt;/div&gt;
+    &lt;div *ngIf="!loading"&gt;
+      &lt;h2&gt;Projects ({{projects.length}})&lt;/h2&gt;
+      &lt;div *ngFor="let project of projects"&gt;
+        &lt;h3&gt;{{project.metadata?.name || project.projectIdentifier}}&lt;/h3&gt;
+        &lt;p&gt;Founder: {{project.founderKey}}&lt;/p&gt;
+        &lt;p *ngIf="project.metadata?.about"&gt;{{project.metadata.about}}&lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  `
+})
+export class ProjectsComponent implements OnInit {
+  projects: any[] = [];
+  loading = true;
+  private sdk = new AngorHubSDK('mainnet');
+  
+  async ngOnInit() {
+    try {
+      this.projects = await this.sdk.getProjects(10);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+    } finally {
+      this.loading = false;
+    }
+  }
+}</div>
+
+      <h3>Vue.js Integration</h3>
+      <div class="code-block" data-lang="javascript">import { ref, onMounted } from 'vue';
+import { AngorHubSDK } from 'angorhub-sdk';
+
+export default {
+  setup() {
+    const projects = ref([]);
+    const loading = ref(true);
+    const sdk = new AngorHubSDK('mainnet');
+    
+    const fetchProjects = async () => {
+      try {
+        const projectsData = await sdk.getProjects(10);
+        projects.value = projectsData;
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+      } finally {
+        loading.value = false;
+      }
+    };
+    
+    onMounted(fetchProjects);
+    
+    return {
+      projects,
+      loading
+    };
+  },
+  
+  template: `
+    &lt;div v-if="loading"&gt;Loading projects...&lt;/div&gt;
+    &lt;div v-else&gt;
+      &lt;h2&gt;Projects ({{ projects.length }})&lt;/h2&gt;
+      &lt;div v-for="project in projects" :key="project.projectIdentifier"&gt;
+        &lt;h3&gt;{{ project.metadata?.name || project.projectIdentifier }}&lt;/h3&gt;
+        &lt;p&gt;Founder: {{ project.founderKey }}&lt;/p&gt;
+        &lt;p v-if="project.metadata?.about"&gt;{{ project.metadata.about }}&lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  `
+};</div>
+
+      <h3>Next.js Integration</h3>
+      <div class="code-block" data-lang="jsx">// pages/projects.js
+import { useState, useEffect } from 'react';
+import { AngorHubSDK } from 'angorhub-sdk';
+
+export default function ProjectsPage() {
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const sdk = new AngorHubSDK('mainnet');
+        const projectsData = await sdk.getProjects(10);
+        setProjects(projectsData);
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchProjects();
+  }, []);
+  
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;Angor Projects&lt;/h1&gt;
+      {loading ? (
+        &lt;p&gt;Loading projects...&lt;/p&gt;
+      ) : (
+        &lt;div&gt;
+          {projects.map(project =&gt; (
+            &lt;div key={project.projectIdentifier}&gt;
+              &lt;h3&gt;{project.metadata?.name || project.projectIdentifier}&lt;/h3&gt;
+              &lt;p&gt;Founder: {project.founderKey}&lt;/p&gt;
+              {project.metadata?.about && &lt;p&gt;{project.metadata.about}&lt;/p&gt;}
+            &lt;/div&gt;
+          ))}
+        &lt;/div&gt;
+      )}
+    &lt;/div&gt;
+  );
+}
+
+// For server-side rendering
+export async function getServerSideProps() {
+  try {
+    const sdk = new AngorHubSDK('mainnet');
+    const projects = await sdk.getProjects(10);
+    
+    return {
+      props: {
+        initialProjects: projects
+      }
+    };
+  } catch (error) {
+    return {
+      props: {
+        initialProjects: []
+      }
+    };
+  }
+}</div>
+    </section>
+
+    <!-- Troubleshooting Section -->
+    <section id="troubleshooting" class="section">
+      <h2>🔍 Troubleshooting</h2>
+      
+      <h3>Common Issues & Solutions</h3>
+      
+      <h4>1. CORS Issues in Browser</h4>
+      <div class="alert alert-warning">
+        <strong>Problem:</strong> CORS errors when making requests from the browser.
+      </div>
+      <p><strong>Solutions:</strong></p>
+      <ul>
+        <li>Use a CORS proxy server</li>
+        <li>Configure your server to handle CORS headers</li>
+        <li>For development: use browser extensions to disable CORS temporarily</li>
+        <li>Use the pre-built bundle that handles CORS better</li>
+      </ul>
+      <div class="code-block" data-lang="javascript">// Use CDN bundle which handles CORS better
+// &lt;script src="https://cdn.jsdelivr.net/npm/angorhub-sdk@latest/dist/browser/angorhub-sdk.bundle.js"&gt;&lt;/script&gt;
+
+// Or configure a CORS proxy
+const sdk = new AngorHubSDK('mainnet', {
+  configMode: 'manual',
+  manualIndexers: {
+    mainnet: ['https://cors-proxy.example.com/https://api.angor.io/']
+  }
+});</div>
+
+      <h4>2. Network Timeouts & Connection Issues</h4>
+      <div class="alert alert-warning">
+        <strong>Problem:</strong> Requests timing out or failing intermittently.
+      </div>
+      <p><strong>Solutions:</strong></p>
+      <div class="code-block" data-lang="javascript">// Increase timeout and enable retries
+const sdk = new AngorHubSDK('mainnet', {
+  timeout: 15000, // 15 seconds
+  maxRetries: 5, // Retry failed requests
+  retryDelay: 2000, // Wait 2 seconds between retries
+  concurrentRequests: 5 // Reduce concurrent requests if network is slow
+});
+
+// Monitor health status
+const health = sdk.getHealthStatus();
+console.log('Healthy indexers:', health.healthyCount);
+
+// Handle errors gracefully
+try {
+  const projects = await sdk.getProjects();
+} catch (error) {
+  if (error.message.includes('timeout')) {
+    console.log('Request timed out, trying with fewer results...');
+    const projects = await sdk.getProjects(5); // Try with fewer results
+  }
+}</div>
+
+      <h4>3. Nostr Connection Issues</h4>
+      <div class="alert alert-warning">
+        <strong>Problem:</strong> Nostr enrichment not working or failing.
+      </div>
+      <p><strong>Solutions:</strong></p>
+      <div class="code-block" data-lang="javascript">// Option 1: Disable Nostr if causing issues
+const sdk = new AngorHubSDK('mainnet', {
+  enableNostr: false
+});
+
+// Option 2: Use custom reliable relays
+const sdk = new AngorHubSDK('mainnet', {
+  enableNostr: true,
+  nostrRelays: [
+    'wss://relay.damus.io',
+    'wss://nos.lol',
+    'wss://relay.nostr.info'
+  ]
+});
+
+// Option 3: Handle Nostr failures gracefully
+const projects = await sdk.getProjects();
+console.log('Projects loaded, Nostr data may be enriched asynchronously');</div>
+
+      <h4>4. SDK Initialization Issues</h4>
+      <div class="alert alert-warning">
+        <strong>Problem:</strong> SDK methods fail immediately after initialization or return unexpected results.
+      </div>
+      <p><strong>Solutions:</strong></p>
+      <div class="code-block" data-lang="javascript">// Use proper initialization pattern
+async function initializeSDK(network = 'mainnet', config = {}) {
+  const sdk = new AngorHubSDK(network, config);
+  
+  // Wait for SDK to be ready by checking health status
+  let attempts = 0;
+  while (attempts < 20) {
+    try {
+      const health = sdk.getHealthStatus();
+      if (health.healthyCount > 0) {
+        return sdk; // SDK is ready
+      }
+    } catch (error) {
+      // Still initializing
+    }
+    
+    await new Promise(resolve => setTimeout(resolve, 500));
+    attempts++;
+  }
+  
+  return sdk; // Return anyway after max attempts
+}
+
+// Use it
+const sdk = await initializeSDK('mainnet');
+const projects = await sdk.getProjects();</div>
+
+      <h4>5. Cache Issues</h4>
+      <div class="alert alert-warning">
+        <strong>Problem:</strong> Stale data or cache taking too much memory.
+      </div>
+      <p><strong>Solutions:</strong></p>
+      <div class="code-block" data-lang="javascript">// Configure cache settings
+const sdk = new AngorHubSDK('mainnet', {
+  enableCache: true,
+  cacheTtl: 60000 // 1 minute cache (shorter for fresh data)
+});
+
+// Monitor cache size
+const stats = sdk.getCacheStats();
+console.log('Cache entries:', stats.sdkCache.size);
+
+// Clear cache when needed
+if (stats.sdkCache.size > 1000) {
+  sdk.clearCache();
+  console.log('Cache cleared due to size');
+}
+
+// Disable cache for real-time data
+const freshProjects = await sdk.getProjects(10, 0, false); // useCache = false</div>
+
+      <h4>6. TypeScript Issues</h4>
+      <div class="alert alert-warning">
+        <strong>Problem:</strong> TypeScript compilation errors.
+      </div>
+      <p><strong>Solutions:</strong></p>
+      <div class="code-block" data-lang="typescript">// Ensure proper imports
+import { AngorHubSDK } from 'angorhub-sdk';
+import type { AngorProject, AngorProjectDetails, SDKConfig } from 'angorhub-sdk';
+
+// Type the config properly
+const config: SDKConfig = {
+  configMode: 'manual',
+  manualIndexers: {
+    mainnet: ['https://api.angor.io/']
+  },
+  enableNostr: true,
+  timeout: 10000
+};
+
+const sdk = new AngorHubSDK('mainnet', config);
+
+// Type assertions when needed
+const projects = await sdk.getProjects() as AngorProject[];</div>
+
+      <h3>Debugging Tips</h3>
+      
+      <div class="example-container">
+        <div class="example-header">Debug Configuration</div>
+        <div class="example-body">
+          <div class="code-block" data-lang="javascript">// Enable detailed logging and monitoring
+const sdk = new AngorHubSDK('mainnet', {
+  timeout: 10000,
+  maxRetries: 3,
+  enableCache: true
+});
+
+// Monitor SDK status
+setInterval(() => {
+  const info = sdk.getConfigInfo();
+  const health = sdk.getHealthStatus();
+  const cache = sdk.getCacheStats();
+  
+  console.log('SDK Status:', {
+    healthyIndexers: `${health.healthyCount}/${health.indexers.length}`,
+    activeRequests: info.activeRequests,
+    queuedRequests: info.queuedRequests,
+    cacheSize: cache.sdkCache.size
+  });
+}, 30000); // Log every 30 seconds</div>
+        </div>
+      </div>
+
+      <div class="example-container">
+        <div class="example-header">Test Configuration</div>
+        <div class="example-body">
+          <div class="code-block" data-lang="javascript">// Test different configuration modes
+async function testConfiguration() {
+  const configs = [
+    { mode: 'remote', name: 'Remote Config' },
+    { mode: 'default', name: 'Default Config' }
+  ];
+
+  for (const { mode, name } of configs) {
+    try {
+      console.log(`Testing ${name}...`);
+      const sdk = new AngorHubSDK('mainnet', { configMode: mode });
+      
+      // Wait for initialization
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const projects = await sdk.getProjects(1);
+      console.log(`${name}: SUCCESS - Got ${projects.length} projects`);
+      
+      const health = sdk.getHealthStatus();
+      console.log(`${name}: Healthy indexers: ${health.healthyCount}`);
+      
+    } catch (error) {
+      console.error(`${name}: FAILED -`, error.message);
+    }
+  }
+}
+
+testConfiguration();</div>
+        </div>
+      </div>
+
+      <h3>Getting Help</h3>
+      <div class="alert alert-info">
+        <strong>Need more help?</strong>
+        <ul class="support-list">
+          <li>Check the <a href="#examples">examples section</a> for working code</li>
+          <li>Review the <a href="#api">API reference</a> for method signatures</li>
+          <li>Test with the interactive demos on this page</li>
+          <li>Use the browser's developer console to check for errors</li>
+          <li>Try different configuration modes if one isn't working</li>
+        </ul>
+      </div>
+
+      <h3>Debug Mode</h3>
+      <p>Enable debug logging to troubleshoot issues:</p>
+      <div class="code-block" data-lang="javascript">// Check SDK health
+const health = sdk.getHealth();
+console.log('SDK Health:', health);
+
+// Check configuration
+const config = sdk.getConfigurationInfo();
+console.log('Current Config:', config);
+
+// Check cache statistics
+const cacheStats = sdk.getCacheStats();
+console.log('Cache Stats:', cacheStats);</div>
+
+      <h3>Performance Optimization</h3>
+      
+      <h4>Enable Caching</h4>
+      <div class="code-block" data-lang="javascript">const sdk = new AngorHubSDK('mainnet', {
+  enableCache: true,
+  cacheTtl: 600000 // 10 minutes
+});</div>
+
+      <h4>Optimize Concurrent Requests</h4>
+      <div class="code-block" data-lang="javascript">const sdk = new AngorHubSDK('mainnet', {
+  concurrentRequests: 12 // Increase for better performance
+});</div>
+
+      <h4>Use Compression</h4>
+      <div class="code-block" data-lang="javascript">const sdk = new AngorHubSDK('mainnet', {
+  enableCompression: true
+});</div>
+
+      <h3>Error Handling Best Practices</h3>
+      <div class="code-block" data-lang="javascript">try {
+  const projects = await sdk.getProjects();
+  // Handle success
+} catch (error) {
+  if (error.code === 'NETWORK_ERROR') {
+    // Handle network issues
+    console.error('Network error:', error.message);
+  } else if (error.code === 'TIMEOUT') {
+    // Handle timeout
+    console.error('Request timed out');
+  } else {
+    // Handle other errors
+    console.error('Unknown error:', error);
+  }
+}</div>
+
+      <h3>Support</h3>
+      <div class="alert alert-info">
+        <strong>Need Help?</strong> 
+        <ul class="support-list">
+          <li>Check the GitHub repository for issues and documentation</li>
+          <li>Join the Angor community Discord for real-time support</li>
+          <li>Review the examples in the <code class="inline-code">examples/</code> directory</li>
+        </ul>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p>© 2025 AngorHub SDK - Built with ❤️ for the Angor ecosystem</p>
+    </footer>
+  </div>
+
+  <!-- Include the SDK for interactive demos -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="../dist/browser/angorhub-sdk.bundle.js"></script>
+  
+  <script>
+    let demoSdk = null;
+
+    // Helper function to initialize SDK properly
+    async function initializeSDKWithWait(network = 'mainnet', config = {}) {
+      const sdk = new AngorHubSDK.AngorHubSDK(network, config);
+      
+      // Wait for SDK initialization by checking health status
+      let attempts = 0;
+      while (attempts < 20) {
+        try {
+          const health = sdk.getHealthStatus();
+          if (health.healthyCount > 0) {
+            return sdk; // SDK is ready
+          }
+        } catch (error) {
+          // SDK not ready yet
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 500));
+        attempts++;
+      }
+      
+      // If still not ready, return anyway and let error handling deal with it
+      return sdk;
+    }
+
+    // Tab functionality
+    function showTab(tabName) {
+      // Hide all tab contents
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      
+      // Remove active class from all tabs
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Show selected tab content
+      document.getElementById(tabName).classList.add('active');
+      
+      // Add active class to clicked tab
+      event.target.classList.add('active');
+    }
+
+    // Configuration demo functions
+    function toggleConfigOptions() {
+      const mode = document.getElementById('demoConfigMode').value;
+      const remoteGroup = document.getElementById('remoteConfigGroup');
+      const manualGroup = document.getElementById('manualConfigGroup');
+      
+      if (mode === 'remote') {
+        remoteGroup.classList.remove('hidden');
+        manualGroup.classList.add('hidden');
+      } else if (mode === 'manual') {
+        remoteGroup.classList.add('hidden');
+        manualGroup.classList.remove('hidden');
+      } else {
+        remoteGroup.classList.add('hidden');
+        manualGroup.classList.add('hidden');
+      }
+    }
+
+    function showStatus(message, type = 'loading') {
+      const status = document.getElementById('demoStatus');
+      status.classList.remove('hidden');
+      status.className = `status status-${type}`;
+      status.textContent = message;
+    }
+
+    async function initializeDemoSDK() {
+      try {
+        showStatus('Initializing SDK...', 'loading');
+        
+        const network = document.getElementById('demoNetwork').value;
+        const configMode = document.getElementById('demoConfigMode').value;
+        
+        let config = {
+          configMode: configMode,
+          enableNostr: true,
+          enableCache: true
+        };
+        
+        if (configMode === 'remote') {
+          const customUrl = document.getElementById('demoConfigUrl').value.trim();
+          if (customUrl) {
+            config.configServiceUrl = customUrl;
+          }
+        } else if (configMode === 'manual') {
+          const mainnetIndexers = document.getElementById('demoMainnetIndexers').value
+            .split(',').map(s => s.trim()).filter(s => s);
+          const testnetIndexers = document.getElementById('demoTestnetIndexers').value
+            .split(',').map(s => s.trim()).filter(s => s);
+          const relays = document.getElementById('demoRelays').value.trim();
+          
+          config.manualIndexers = {
+            mainnet: mainnetIndexers,
+            testnet: testnetIndexers
+          };
+          
+          if (relays) {
+            config.manualRelays = relays;
+          }
+        }
+        
+        demoSdk = await initializeSDKWithWait(network, config);
+        
+        showStatus('SDK initialized successfully!', 'success');
+        document.getElementById('demoResult').textContent = JSON.stringify({
+          network: network,
+          configMode: configMode,
+          status: 'initialized'
+        }, null, 2);
+        
+      } catch (error) {
+        showStatus('Failed to initialize SDK', 'error');
+        document.getElementById('demoResult').textContent = `Error: ${error.message}`;
+      }
+    }
+
+    function getConfigInfo() {
+      if (!demoSdk) {
+        showStatus('Please initialize SDK first', 'error');
+        return;
+      }
+      
+      try {
+        const configInfo = demoSdk.getConfigurationInfo();
+        showStatus('Configuration retrieved successfully!', 'success');
+        document.getElementById('demoResult').textContent = JSON.stringify(configInfo, null, 2);
+      } catch (error) {
+        showStatus('Failed to get configuration', 'error');
+        document.getElementById('demoResult').textContent = `Error: ${error.message}`;
+      }
+    }
+
+    // Interactive demo functions
+    async function demoGetProjects() {
+      if (!demoSdk) {
+        demoSdk = await initializeSDKWithWait('mainnet');
+      }
+      
+      try {
+        const projects = await demoSdk.getProjects(3);
+        let output = `Retrieved ${projects.length} projects:\n\n`;
+        
+        projects.forEach((project, index) => {
+          output += `Project ${index + 1}:\n`;
+          output += `  ID: ${project.projectIdentifier}\n`;
+          output += `  Founder: ${project.founderKey}\n`;
+          output += `  Transaction: ${project.trxId}\n`;
+          
+          if (project.metadata?.name) {
+            output += `  Name: ${project.metadata.name}\n`;
+          }
+          if (project.metadata?.about) {
+            output += `  Description: ${project.metadata.about.substring(0, 100)}...\n`;
+          }
+          output += '\n';
+        });
+        
+        document.getElementById('projectsOutput').textContent = output;
+      } catch (error) {
+        document.getElementById('projectsOutput').textContent = `Error: ${error.message}`;
+      }
+    }
+
+    async function demoGetTestnetProjects() {
+      try {
+        const testnetSdk = await initializeSDKWithWait('testnet');
+        
+        const projects = await testnetSdk.getProjects(3);
+        
+        let output = `Retrieved ${projects.length} testnet projects:\n\n`;
+        
+        projects.forEach((project, index) => {
+          output += `Project ${index + 1}:\n`;
+          output += `  ID: ${project.projectIdentifier}\n`;
+          output += `  Founder: ${project.founderKey}\n`;
+          output += `  Transaction: ${project.trxId}\n\n`;
+        });
+        
+        document.getElementById('projectsOutput').textContent = output;
+      } catch (error) {
+        document.getElementById('projectsOutput').textContent = `Error: ${error.message}`;
+      }
+    }
+
+    async function demoGetInvestments() {
+      const projectId = document.getElementById('investmentProjectId').value.trim();
+      
+      if (!projectId) {
+        document.getElementById('investmentsOutput').textContent = 'Please enter a project ID';
+        return;
+      }
+      
+      if (!demoSdk) {
+        demoSdk = await initializeSDKWithWait('mainnet');
+      }
+      
+      try {
+        const investments = await demoSdk.getProjectInvestments(projectId, 5);
+        
+        let output = `Retrieved ${investments.length} investments:\n\n`;
+        
+        investments.forEach((investment, index) => {
+          output += `Investment ${index + 1}:\n`;
+          output += `  Investor: ${investment.investorPublicKey}\n`;
+          output += `  Amount: ${investment.totalAmount}\n`;
+          output += `  Transaction: ${investment.transactionId}\n`;
+          output += `  Is Seeder: ${investment.isSeeder ? 'Yes' : 'No'}\n\n`;
+        });
+        
+        document.getElementById('investmentsOutput').textContent = output;
+      } catch (error) {
+        document.getElementById('investmentsOutput').textContent = `Error: ${error.message}`;
+      }
+    }
+
+    async function demoNostrEnrichment() {
+      if (!demoSdk) {
+        demoSdk = await initializeSDKWithWait('mainnet', { enableNostr: true });
+      }
+      
+      try {
+        const projects = await demoSdk.getProjects(2);
+        
+        let output = `Testing Nostr enrichment on ${projects.length} projects:\n\n`;
+        
+        projects.forEach((project, index) => {
+          output += `Project ${index + 1}:\n`;
+          output += `  ID: ${project.projectIdentifier}\n`;
+          
+          if (project.projectInfo) {
+            output += `  ✅ Project Info Available:\n`;
+            output += `     Target Amount: ${project.projectInfo.targetAmount}\n`;
+            output += `     Start Date: ${new Date(project.projectInfo.startDate * 1000).toLocaleDateString()}\n`;
+            output += `     End Date: ${new Date(project.projectInfo.endDate * 1000).toLocaleDateString()}\n`;
+          } else {
+            output += `  ❌ No project info from Nostr\n`;
+          }
+          
+          if (project.metadata) {
+            output += `  ✅ Metadata Available:\n`;
+            if (project.metadata.name) output += `     Name: ${project.metadata.name}\n`;
+            if (project.metadata.about) output += `     Description: ${project.metadata.about.substring(0, 100)}...\n`;
+            if (project.metadata.website) output += `     Website: ${project.metadata.website}\n`;
+          } else {
+            output += `  ❌ No metadata from Nostr\n`;
+          }
+          
+          output += '\n';
+        });
+        
+        document.getElementById('nostrOutput').textContent = output;
+      } catch (error) {
+        document.getElementById('nostrOutput').textContent = `Error: ${error.message}`;
+      }
+    }
+
+    // Initialize config mode toggle
+    document.getElementById('demoConfigMode').addEventListener('change', toggleConfigOptions);
+    
+    // Smooth scrolling for navigation
+    document.querySelectorAll('nav a').forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const targetId = this.getAttribute('href').substring(1);
+        const targetElement = document.getElementById(targetId);
+        if (targetElement) {
+          targetElement.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    });
+
+    // Initialize with default configuration visible
+    toggleConfigOptions();
+
+    // Initialize Prism.js syntax highlighting
+    function initializePrism() {
+      const codeBlocks = document.querySelectorAll('.code-block');
+      
+      codeBlocks.forEach(block => {
+        const lang = block.getAttribute('data-lang');
+        const content = block.textContent || block.innerText;
+        
+        // Create proper Prism structure
+        const pre = document.createElement('pre');
+        const code = document.createElement('code');
+        
+        // Set language class for Prism
+        if (lang) {
+          code.className = `language-${lang}`;
+        }
+        
+        code.textContent = content;
+        pre.appendChild(code);
+        
+        // Replace content but keep the data-lang attribute
+        block.innerHTML = '';
+        block.appendChild(pre);
+        
+        // Trigger Prism highlighting
+        if (window.Prism) {
+          Prism.highlightElement(code);
+        }
+      });
+    }
+
+    // Initialize when page loads
+    if (window.Prism) {
+      initializePrism();
+    } else {
+      // Wait for Prism to load
+      setTimeout(initializePrism, 100);
+    }
+  </script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 import type { AngorProject, AngorProjectDetails, AngorProjectStats, AngorInvestment, IndexerHealth, IndexerService } from './interfaces';
-export type ConfigMode = 'remote' | 'manual' | 'hardcoded';
+export type ConfigMode = 'remote' | 'manual' | 'default';
 export interface SDKConfig {
     timeout?: number;
     configMode?: ConfigMode;

@@ -13,7 +13,7 @@ import type {
   IndexerConfig
 } from './interfaces';
 
-export type ConfigMode = 'remote' | 'manual' | 'hardcoded';
+export type ConfigMode = 'remote' | 'manual' | 'default';
 
 export interface SDKConfig {
   timeout?: number;
@@ -119,7 +119,7 @@ export class AngorHubSDK {
         }
         return this.getDefaultNostrRelays(network);
       
-      case 'hardcoded':
+      case 'default':
       default:
         return this.getDefaultNostrRelays(network);
     }
@@ -143,7 +143,7 @@ export class AngorHubSDK {
         }
         return this.getDefaultIndexers(network);
       
-      case 'hardcoded':
+      case 'default':
       default:
         return this.getDefaultIndexers(network);
     }
@@ -168,19 +168,19 @@ export class AngorHubSDK {
     if (network === 'testnet') {
       return [
         "wss://relay.damus.io",
-        "wss://relay.angor.io",
-        "wss://nostr-relay.wlvs.space",
-        "wss://relay.nostr.info",
+        "wss://relay.primal.net",
         "wss://nos.lol",
-        "wss://relay.current.fyi",
-        "wss://nostr.wine",
-        "wss://relay.orangepill.dev"
+        "wss://relay.angor.io",
+        "wss://relay2.angor.io"
       ];
     }
     
     return [
-      "wss://relay.damus.io",
-      "wss://relay.angor.io"
+        "wss://relay.damus.io",
+        "wss://relay.primal.net",
+        "wss://nos.lol",
+        "wss://relay.angor.io",
+        "wss://relay2.angor.io"
     ];
   }
 

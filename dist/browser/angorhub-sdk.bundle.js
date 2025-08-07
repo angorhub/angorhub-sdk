@@ -20813,7 +20813,7 @@ var AngorHubSDK = (function (exports, axios) {
 	                    return this.config.manualRelays.split(',').map(relay => relay.trim());
 	                }
 	                return this.getDefaultNostrRelays(network);
-	            case 'hardcoded':
+	            case 'default':
 	            default:
 	                return this.getDefaultNostrRelays(network);
 	        }
@@ -20834,7 +20834,7 @@ var AngorHubSDK = (function (exports, axios) {
 	                    }));
 	                }
 	                return this.getDefaultIndexers(network);
-	            case 'hardcoded':
+	            case 'default':
 	            default:
 	                return this.getDefaultIndexers(network);
 	        }
@@ -20856,18 +20856,18 @@ var AngorHubSDK = (function (exports, axios) {
 	        if (network === 'testnet') {
 	            return [
 	                "wss://relay.damus.io",
-	                "wss://relay.angor.io",
-	                "wss://nostr-relay.wlvs.space",
-	                "wss://relay.nostr.info",
+	                "wss://relay.primal.net",
 	                "wss://nos.lol",
-	                "wss://relay.current.fyi",
-	                "wss://nostr.wine",
-	                "wss://relay.orangepill.dev"
+	                "wss://relay.angor.io",
+	                "wss://relay2.angor.io"
 	            ];
 	        }
 	        return [
 	            "wss://relay.damus.io",
-	            "wss://relay.angor.io"
+	            "wss://relay.primal.net",
+	            "wss://nos.lol",
+	            "wss://relay.angor.io",
+	            "wss://relay2.angor.io"
 	        ];
 	    }
 	    async initializeIndexers() {
