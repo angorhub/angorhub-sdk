@@ -81,3 +81,18 @@ export interface BatchNostrRequest {
   resolver: (results: Map<string, any>) => void;
   rejecter: (error: Error) => void;
 }
+
+export interface IndexerService {
+  url: string;
+  isPrimary: boolean;
+}
+
+export interface RelayConfig {
+  mainnet: string[];
+  testnet: string[];
+}
+
+export interface IndexerConfig {
+  mainnet: IndexerService[];
+  testnet: IndexerService[];
+}

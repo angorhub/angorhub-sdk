@@ -1,201 +1,303 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AngorHub SDK - Complete Example</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AngorHub SDK Browser Test</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      line-height: 1.6;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    
+    .container {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 20px;
-    }
-    .section {
-      border: 1px solid #ddd;
+      background: white;
       border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
       padding: 20px;
-      margin-bottom: 20px;
-      background-color: #f9f9f9;
     }
-    .section h3 {
-      margin-top: 0;
+    
+    h1 {
       color: #333;
-      border-bottom: 2px solid #4a6fa5;
+      text-align: center;
+      border-bottom: 2px solid #007acc;
       padding-bottom: 10px;
     }
+    
+    h2, h3 {
+      color: #444;
+      margin-top: 30px;
+    }
+    
+    .section {
+      margin: 20px 0;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background-color: #fafafa;
+    }
+    
     .controls {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      margin-bottom: 15px;
       align-items: center;
+      margin-bottom: 15px;
     }
-    input, select, button {
+    
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    
+    label {
+      font-weight: bold;
+      color: #555;
+      font-size: 14px;
+    }
+    
+    input, select, textarea {
       padding: 8px 12px;
       border: 1px solid #ccc;
       border-radius: 4px;
       font-size: 14px;
     }
-    button {
-      background-color: #4a6fa5;
-      color: white;
-      border: none;
-      cursor: pointer;
-      transition: background-color 0.3s;
+    
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #007acc;
+      box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
     }
-    button:hover {
-      background-color: #3a5a95;
-    }
-    button:disabled {
-      background-color: #ccc;
-      cursor: not-allowed;
-    }
-    pre {
-      background-color: #f5f5f5;
-      padding: 15px;
-      border-radius: 5px;
-      white-space: pre-wrap;
-      max-height: 400px;
-      overflow-y: auto;
-      font-size: 12px;
-      border: 1px solid #ddd;
-    }
-    label {
-      font-weight: bold;
-      margin-right: 5px;
-    }
-    .input-group {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    .status {
-      padding: 10px;
-      border-radius: 4px;
-      margin-bottom: 15px;
-      font-weight: bold;
-    }
-    .status.success {
-      background-color: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
-    }
-    .status.error {
-      background-color: #f8d7da;
-      color: #721c24;
-      border: 1px solid #f5c6cb;
-    }
-    .status.loading {
-      background-color: #d1ecf1;
-      color: #0c5460;
-      border: 1px solid #bee5eb;
-    }
-    .status[style*="display: none"] {
-      display: none !important;
-    }
+    
     .wide-input {
       min-width: 300px;
     }
+    
     .extra-wide-input {
       min-width: 400px;
     }
+    
+    button {
+      background-color: #007acc;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.2s;
+    }
+    
+    button:hover {
+      background-color: #005a9e;
+    }
+    
+    button:active {
+      background-color: #004080;
+    }
+    
+    .status {
+      padding: 10px;
+      border-radius: 4px;
+      margin: 10px 0;
+      font-weight: bold;
+    }
+    
+    .status.loading {
+      background-color: #e3f2fd;
+      color: #1976d2;
+      border: 1px solid #bbdefb;
+    }
+    
+    .status.success {
+      background-color: #e8f5e8;
+      color: #2e7d32;
+      border: 1px solid #c8e6c9;
+    }
+    
+    .status.error {
+      background-color: #ffebee;
+      color: #c62828;
+      border: 1px solid #ffcdd2;
+    }
+    
+    .status.hidden {
+      display: none;
+    }
+    
+    pre {
+      background-color: #f8f8f8;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      padding: 15px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.4;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
     .hidden {
       display: none;
+    }
+    
+    .config-options {
+      margin: 10px 0;
+      padding: 10px;
+      background-color: #f0f8ff;
+      border-radius: 4px;
+      border: 1px solid #cce7ff;
+    }
+    
+    textarea {
+      width: 100%;
+      min-height: 80px;
+      resize: vertical;
     }
   </style>
 </head>
 <body>
-  <h1>AngorHub SDK - Complete Example</h1>
-  
-  <!-- Network Configuration -->
-  <div class="section">
-    <h3>🌐 Network Configuration</h3>
-    <div class="controls">
-      <div class="input-group">
-        <label for="network">Network:</label>
-        <select id="network">
-          <option value="mainnet" selected>Mainnet</option>
-          <option value="testnet">Testnet</option>
-        </select>
+  <div class="container">
+    <h1>🚀 AngorHub SDK Browser Test</h1>
+    
+    <!-- Configuration Section -->
+    <div class="section">
+      <h3>⚙️ Configuration</h3>
+      <div class="controls">
+        <div class="input-group">
+          <label for="network">Network:</label>
+          <select id="network">
+            <option value="mainnet">Mainnet</option>
+            <option value="testnet">Testnet</option>
+          </select>
+        </div>
+        
+        <div class="input-group">
+          <label for="configMode">Configuration Mode:</label>
+          <select id="configMode">
+            <option value="remote">Remote (Fetch from Service)</option>
+            <option value="manual">Manual (User Provided)</option>
+            <option value="hardcoded">Default (SDK Defaults)</option>
+          </select>
+        </div>
       </div>
-      <button id="getConfigInfo">Get Config Info</button>
+      
+      <!-- Remote Configuration Options -->
+      <div id="remoteConfigOptions" class="config-options hidden">
+        <div class="input-group">
+          <label for="configServiceUrl">Configuration Service URL (optional):</label>
+          <input type="url" id="configServiceUrl" placeholder="https://angorhub.github.io/lists" class="wide-input">
+        </div>
+      </div>
+      
+      <!-- Manual Configuration Options -->
+      <div id="manualConfigOptions" class="config-options hidden">
+        <div class="input-group">
+          <label for="manualIndexersMainnet">Mainnet Indexers (comma-separated):</label>
+          <textarea id="manualIndexersMainnet" placeholder="http://localhost:3000,https://indexer1.example.com"></textarea>
+        </div>
+        
+        <div class="input-group">
+          <label for="manualIndexersTestnet">Testnet Indexers (comma-separated):</label>
+          <textarea id="manualIndexersTestnet" placeholder="http://localhost:3001,https://testnet-indexer.example.com"></textarea>
+        </div>
+        
+        <div class="input-group">
+          <label for="manualRelays">Nostr Relays (JSON array or comma-separated):</label>
+          <textarea id="manualRelays" placeholder="wss://relay1.example.com,wss://relay2.example.com"></textarea>
+        </div>
+      </div>
+      
+      <div class="controls">
+        <button id="getConfigInfo">Get Configuration Info</button>
+        <button id="updateConfig">Update Configuration</button>
+      </div>
+      
+      <div id="configStatus" class="status hidden"></div>
+      <pre id="configResult">Click "Get Configuration Info" to see current configuration...</pre>
     </div>
-    <div id="configStatus" class="status hidden"></div>
-    <pre id="configResult">SDK configuration will appear here...</pre>
-  </div>
 
-  <!-- Projects Management -->
-  <div class="section">
-    <h3>📋 Projects Management</h3>
-    <div class="controls">
-      <div class="input-group">
-        <label for="projectsLimit">Limit:</label>
-        <input type="number" id="projectsLimit" value="10" min="1" max="100">
+    <!-- Projects List -->
+    <div class="section">
+      <h3>📋 Projects List</h3>
+      <div class="controls">
+        <div class="input-group">
+          <label for="projectsLimit">Limit:</label>
+          <input type="number" id="projectsLimit" value="10" min="1" max="100">
+        </div>
+        <div class="input-group">
+          <label for="projectsOffset">Offset:</label>
+          <input type="number" id="projectsOffset" value="0" min="0">
+        </div>
+        <button id="getProjects">Get Projects</button>
       </div>
-      <div class="input-group">
-        <label for="projectsOffset">Offset:</label>
-        <input type="number" id="projectsOffset" value="0" min="0">
-      </div>
-      <button id="getProjects">Get Projects</button>
+      <div id="projectsStatus" class="status hidden"></div>
+      <pre id="projectsResult">Click "Get Projects" to fetch projects list...</pre>
     </div>
-    <div id="projectsStatus" class="status hidden"></div>
-    <pre id="projectsResult">Click "Get Projects" to fetch projects list...</pre>
-  </div>
 
-  <!-- Single Project Details -->
-  <div class="section">
-    <h3>🔍 Project Details</h3>
-    <div class="controls">
-      <div class="input-group">
-        <label for="projectId">Project ID:</label>
-        <input type="text" id="projectId" placeholder="Enter project identifier" class="wide-input">
+    <!-- Single Project Details -->
+    <div class="section">
+      <h3>🔍 Project Details</h3>
+      <div class="controls">
+        <div class="input-group">
+          <label for="projectId">Project ID:</label>
+          <input type="text" id="projectId" placeholder="Enter project identifier" class="wide-input">
+        </div>
+        <button id="getProject">Get Project Details</button>
+        <button id="getProjectStats">Get Project Stats</button>
       </div>
-      <button id="getProject">Get Project Details</button>
-      <button id="getProjectStats">Get Project Stats</button>
+      <div id="projectStatus" class="status hidden"></div>
+      <pre id="projectResult">Enter a project ID and click a button to fetch details...</pre>
     </div>
-    <div id="projectStatus" class="status hidden"></div>
-    <pre id="projectResult">Enter a project ID and click a button to fetch details...</pre>
-  </div>
 
-  <!-- Project Investments -->
-  <div class="section">
-    <h3>💰 Project Investments</h3>
-    <div class="controls">
-      <div class="input-group">
-        <label for="investmentProjectId">Project ID:</label>
-        <input type="text" id="investmentProjectId" placeholder="Enter project identifier" class="wide-input">
+    <!-- Project Investments -->
+    <div class="section">
+      <h3>💰 Project Investments</h3>
+      <div class="controls">
+        <div class="input-group">
+          <label for="investmentProjectId">Project ID:</label>
+          <input type="text" id="investmentProjectId" placeholder="Enter project identifier" class="wide-input">
+        </div>
+        <div class="input-group">
+          <label for="investmentsLimit">Limit:</label>
+          <input type="number" id="investmentsLimit" value="10" min="1" max="100">
+        </div>
+        <div class="input-group">
+          <label for="investmentsOffset">Offset:</label>
+          <input type="number" id="investmentsOffset" value="0" min="0">
+        </div>
+        <button id="getProjectInvestments">Get Investments</button>
       </div>
-      <div class="input-group">
-        <label for="investmentsLimit">Limit:</label>
-        <input type="number" id="investmentsLimit" value="10" min="1" max="100">
-      </div>
-      <div class="input-group">
-        <label for="investmentsOffset">Offset:</label>
-        <input type="number" id="investmentsOffset" value="0" min="0">
-      </div>
-      <button id="getProjectInvestments">Get Investments</button>
+      <div id="investmentsStatus" class="status hidden"></div>
+      <pre id="investmentsResult">Enter project ID and click "Get Investments" to fetch investment data...</pre>
     </div>
-    <div id="investmentsStatus" class="status hidden"></div>
-    <pre id="investmentsResult">Enter project ID and click "Get Investments" to fetch investment data...</pre>
-  </div>
 
-  <!-- Specific Investor Investment -->
-  <div class="section">
-    <h3>👤 Investor Investment</h3>
-    <div class="controls">
-      <div class="input-group">
-        <label for="investorProjectId">Project ID:</label>
-        <input type="text" id="investorProjectId" placeholder="Enter project identifier" class="wide-input">
+    <!-- Specific Investor Investment -->
+    <div class="section">
+      <h3>👤 Investor Investment</h3>
+      <div class="controls">
+        <div class="input-group">
+          <label for="investorProjectId">Project ID:</label>
+          <input type="text" id="investorProjectId" placeholder="Enter project identifier" class="wide-input">
+        </div>
+        <div class="input-group">
+          <label for="investorPublicKey">Investor Public Key:</label>
+          <input type="text" id="investorPublicKey" placeholder="Enter investor public key" class="extra-wide-input">
+        </div>
+        <button id="getInvestorInvestment">Get Investor Investment</button>
       </div>
-      <div class="input-group">
-        <label for="investorPublicKey">Investor Public Key:</label>
-        <input type="text" id="investorPublicKey" placeholder="Enter investor public key" class="extra-wide-input">
-      </div>
-      <button id="getInvestorInvestment">Get Investor Investment</button>
+      <div id="investorStatus" class="status hidden"></div>
+      <pre id="investorResult">Enter project ID and investor public key to fetch specific investment...</pre>
     </div>
-    <div id="investorStatus" class="status hidden"></div>
-    <pre id="investorResult">Enter project ID and investor public key to fetch specific investment...</pre>
   </div>
   
   <!-- Import Axios -->
@@ -210,30 +312,66 @@
     // Initialize SDK
     function initializeSDK() {
       const network = document.getElementById('network').value;
+      const configMode = document.getElementById('configMode').value;
+      
+      let config = {
+        enableNostr: true,
+        enableCache: true,
+        cacheTtl: 300000,
+        maxRetries: 2,
+        timeout: 8000,
+        enableCompression: false,
+        concurrentRequests: 8,
+        configMode: configMode
+      };
+      
+      if (configMode === 'remote') {
+        const customUrl = document.getElementById('configServiceUrl').value.trim();
+        if (customUrl) {
+          config.configServiceUrl = customUrl;
+        }
+      } else if (configMode === 'manual') {
+        const mainnetIndexers = document.getElementById('manualIndexersMainnet').value
+          .split(',').map(s => s.trim()).filter(s => s);
+        const testnetIndexers = document.getElementById('manualIndexersTestnet').value
+          .split(',').map(s => s.trim()).filter(s => s);
+        const relays = document.getElementById('manualRelays').value.trim();
+        
+        config.manualIndexers = {
+          mainnet: mainnetIndexers,
+          testnet: testnetIndexers
+        };
+        
+        if (relays) {
+          config.manualRelays = relays;
+        }
+      }
+      
       try {
-        // SDK is exported as AngorHubSDK.AngorHubSDK
-        // Configure for browser environment with Nostr enabled
-        sdk = new AngorHubSDK.AngorHubSDK(network, {
-          enableNostr: true,
-          enableCache: true,
-          cacheTtl: 300000, // 5 minutes
-          maxRetries: 2,
-          timeout: 8000,
-          enableCompression: false, // Browser handles this
-          concurrentRequests: 8,
-          nostrRelays: [
-            "wss://relay.angor.io",
-            "wss://relay2.angor.io",
-            "wss://relay.damus.io",
-            "wss://relay.primal.net",
-            "wss://nos.lol"
-          ]
-        });
-        console.log('SDK initialized with Nostr support');
+        sdk = new AngorHubSDK.AngorHubSDK(network, config);
+        console.log(`SDK initialized with ${configMode} configuration`);
         return true;
       } catch (error) {
         console.error('Failed to initialize SDK:', error);
         return false;
+      }
+    }
+    
+    // Show/hide config options based on mode
+    function toggleConfigOptions() {
+      const configMode = document.getElementById('configMode').value;
+      const remoteOptions = document.getElementById('remoteConfigOptions');
+      const manualOptions = document.getElementById('manualConfigOptions');
+      
+      if (configMode === 'remote') {
+        remoteOptions.classList.remove('hidden');
+        manualOptions.classList.add('hidden');
+      } else if (configMode === 'manual') {
+        remoteOptions.classList.add('hidden');
+        manualOptions.classList.remove('hidden');
+      } else {
+        remoteOptions.classList.add('hidden');
+        manualOptions.classList.add('hidden');
       }
     }
     
@@ -249,11 +387,16 @@
       document.getElementById(elementId).classList.add('hidden');
     }
     
+    function displayError(statusId, resultId, error) {
+      console.error('Error:', error);
+      showStatus(statusId, `Error: ${error.message}`, 'error');
+      document.getElementById(resultId).textContent = `Error: ${error.message}\n\nStack: ${error.stack}`;
+    }
+    
     function displayResult(elementId, data) {
       const resultElement = document.getElementById(elementId);
       
       if (Array.isArray(data)) {
-        // Display projects in a formatted table
         let output = '';
         
         data.forEach((project, index) => {
@@ -263,7 +406,10 @@
           output += `Transaction ID: ${project.trxId}\n`;
           output += `Nostr Event ID: ${project.nostrEventId}\n`;
           
-          // Display Nostr project info if available
+          if (project.totalInvestmentsCount !== undefined) {
+            output += `Total Investments: ${project.totalInvestmentsCount}\n`;
+          }
+          
           if (project.projectInfo) {
             output += `\n--- Project Info (Nostr) ---\n`;
             output += `Nostr Pub Key: ${project.projectInfo.nostrPubKey}\n`;
@@ -271,10 +417,10 @@
             output += `Start Date: ${new Date(project.projectInfo.startDate * 1000).toLocaleDateString()}\n`;
             output += `End Date: ${new Date(project.projectInfo.endDate * 1000).toLocaleDateString()}\n`;
             output += `Penalty Days: ${project.projectInfo.penaltyDays}\n`;
-            output += `Stages: ${project.projectInfo.stages.length}\n`;
+            output += `Stages: ${JSON.stringify(project.projectInfo.stages, null, 2)}\n`;
+            output += `Project Seeders: ${JSON.stringify(project.projectInfo.projectSeeders, null, 2)}\n`;
           }
           
-          // Display profile metadata if available
           if (project.metadata) {
             output += `\n--- Profile (Nostr) ---\n`;
             output += `Name: ${project.metadata.name || 'N/A'}\n`;
@@ -290,10 +436,8 @@
         
         resultElement.textContent = output;
       } else {
-        // Single project or other data
         let output = JSON.stringify(data, null, 2);
         
-        // If it's a single project with enhanced data, format it nicely
         if (data.projectIdentifier) {
           output = `Project ID: ${data.projectIdentifier}\n`;
           output += `Founder Key: ${data.founderKey}\n`;
@@ -304,7 +448,6 @@
             output += `Total Investments: ${data.totalInvestmentsCount}\n`;
           }
           
-          // Display Nostr project info if available
           if (data.projectInfo) {
             output += `\n--- Project Info (Nostr) ---\n`;
             output += `Nostr Pub Key: ${data.projectInfo.nostrPubKey}\n`;
@@ -316,7 +459,6 @@
             output += `Project Seeders: ${JSON.stringify(data.projectInfo.projectSeeders, null, 2)}\n`;
           }
           
-          // Display profile metadata if available
           if (data.metadata) {
             output += `\n--- Profile (Nostr) ---\n`;
             output += `Name: ${data.metadata.name || 'N/A'}\n`;
@@ -334,14 +476,25 @@
       }
     }
     
-    function displayError(statusId, resultId, error) {
-      showStatus(statusId, `Error: ${error.message}`, 'error');
-      document.getElementById(resultId).textContent = `Error: ${error.message}`;
-    }
+    // Event handlers
+    document.addEventListener('DOMContentLoaded', function() {
+      toggleConfigOptions();
+      initializeSDK();
+    });
     
-    // Network change handler
+    document.getElementById('configMode').addEventListener('change', function() {
+      toggleConfigOptions();
+      initializeSDK();
+    });
+    
     document.getElementById('network').addEventListener('change', function() {
       initializeSDK();
+    });
+    
+    document.getElementById('configServiceUrl').addEventListener('change', function() {
+      if (document.getElementById('configMode').value === 'remote') {
+        initializeSDK();
+      }
     });
     
     // Get Config Info
@@ -349,12 +502,57 @@
       showStatus('configStatus', 'Getting configuration info...', 'loading');
       
       try {
-        if (!initializeSDK()) {
-          throw new Error('Failed to initialize SDK');
+        if (!sdk) {
+          if (!initializeSDK()) {
+            throw new Error('Failed to initialize SDK');
+          }
         }
         
-        const configInfo = sdk.getConfigInfo();
+        const configInfo = sdk.getConfigurationInfo();
         showStatus('configStatus', 'Configuration retrieved successfully!', 'success');
+        displayResult('configResult', configInfo);
+      } catch (error) {
+        displayError('configStatus', 'configResult', error);
+      }
+    });
+    
+    // Update Configuration
+    document.getElementById('updateConfig').addEventListener('click', async function() {
+      showStatus('configStatus', 'Updating configuration...', 'loading');
+      
+      try {
+        if (!sdk) {
+          throw new Error('SDK not initialized');
+        }
+        
+        const configMode = document.getElementById('configMode').value;
+        let options = {};
+        
+        if (configMode === 'remote') {
+          const customUrl = document.getElementById('configServiceUrl').value.trim();
+          if (customUrl) {
+            options.configServiceUrl = customUrl;
+          }
+        } else if (configMode === 'manual') {
+          const mainnetIndexers = document.getElementById('manualIndexersMainnet').value
+            .split(',').map(s => s.trim()).filter(s => s);
+          const testnetIndexers = document.getElementById('manualIndexersTestnet').value
+            .split(',').map(s => s.trim()).filter(s => s);
+          const relays = document.getElementById('manualRelays').value.trim();
+          
+          options.manualIndexers = {
+            mainnet: mainnetIndexers,
+            testnet: testnetIndexers
+          };
+          
+          if (relays) {
+            options.manualRelays = relays;
+          }
+        }
+        
+        await sdk.updateConfiguration(configMode, options);
+        const configInfo = sdk.getConfigurationInfo();
+        showStatus('configStatus', 'Configuration updated successfully!', 'success');
         displayResult('configResult', configInfo);
       } catch (error) {
         displayError('configStatus', 'configResult', error);
@@ -369,19 +567,17 @@
       showStatus('projectsStatus', 'Fetching projects...', 'loading');
       
       try {
-        if (!initializeSDK()) {
-          throw new Error('Failed to initialize SDK');
+        if (!sdk) {
+          if (!initializeSDK()) {
+            throw new Error('Failed to initialize SDK');
+          }
         }
         
-        console.log('SDK Config:', sdk.getConfigInfo());
-        
         const projects = await sdk.getProjects(limit, offset);
-        console.log('Raw projects data:', projects);
         
         showStatus('projectsStatus', `Retrieved ${projects.length} projects successfully!`, 'success');
         displayResult('projectsResult', projects);
         
-        // Check if Nostr data was enriched
         const enrichedCount = projects.filter(p => p.projectInfo || p.metadata).length;
         if (enrichedCount > 0) {
           console.log(`✅ Nostr enrichment: ${enrichedCount}/${projects.length} projects enriched`);
@@ -390,7 +586,6 @@
         }
         
       } catch (error) {
-        console.error('Error details:', error);
         displayError('projectsStatus', 'projectsResult', error);
       }
     });
@@ -407,8 +602,10 @@
       showStatus('projectStatus', 'Fetching project details...', 'loading');
       
       try {
-        if (!initializeSDK()) {
-          throw new Error('Failed to initialize SDK');
+        if (!sdk) {
+          if (!initializeSDK()) {
+            throw new Error('Failed to initialize SDK');
+          }
         }
         
         const project = await sdk.getProject(projectId);
@@ -431,8 +628,10 @@
       showStatus('projectStatus', 'Fetching project statistics...', 'loading');
       
       try {
-        if (!initializeSDK()) {
-          throw new Error('Failed to initialize SDK');
+        if (!sdk) {
+          if (!initializeSDK()) {
+            throw new Error('Failed to initialize SDK');
+          }
         }
         
         const stats = await sdk.getProjectStats(projectId);
@@ -457,14 +656,15 @@
       showStatus('investmentsStatus', 'Fetching project investments...', 'loading');
       
       try {
-        if (!initializeSDK()) {
-          throw new Error('Failed to initialize SDK');
+        if (!sdk) {
+          if (!initializeSDK()) {
+            throw new Error('Failed to initialize SDK');
+          }
         }
         
         const investments = await sdk.getProjectInvestments(projectId, limit, offset);
         showStatus('investmentsStatus', `Retrieved ${investments.length} investments successfully!`, 'success');
         
-        // Custom display for investments with detailed debugging
         let output = '';
         if (investments && investments.length > 0) {
           investments.forEach((investment, index) => {
@@ -481,7 +681,6 @@
         
         document.getElementById('investmentsResult').textContent = output;
       } catch (error) {
-        console.error('❌ Error getting investments:', error);
         displayError('investmentsStatus', 'investmentsResult', error);
       }
     });
@@ -504,8 +703,10 @@
       showStatus('investorStatus', 'Fetching investor investment...', 'loading');
       
       try {
-        if (!initializeSDK()) {
-          throw new Error('Failed to initialize SDK');
+        if (!sdk) {
+          if (!initializeSDK()) {
+            throw new Error('Failed to initialize SDK');
+          }
         }
         
         const investment = await sdk.getInvestorInvestment(projectId, investorPublicKey);
@@ -514,16 +715,6 @@
       } catch (error) {
         displayError('investorStatus', 'investorResult', error);
       }
-    });
-    
-    // Initialize SDK on page load
-    document.addEventListener('DOMContentLoaded', function() {
-      // Debug: Check what's available
-      console.log('AngorHubSDK type:', typeof AngorHubSDK);
-      console.log('AngorHubSDK keys:', Object.keys(AngorHubSDK || {}));
-      console.log('AngorHubSDK.AngorHubSDK type:', typeof (AngorHubSDK && AngorHubSDK.AngorHubSDK));
-      
-      initializeSDK();
     });
   </script>
 </body>

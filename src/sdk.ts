@@ -7,19 +7,24 @@ import type {
   AngorInvestment,
   CacheEntry,
   RequestConfig,
-  IndexerHealth
+  IndexerHealth,
+  IndexerService,
+  RelayConfig,
+  IndexerConfig
 } from './interfaces';
 
-interface Indexer {
-  url: string;
-  isPrimary: boolean;
-  priority: number;
-}
+export type ConfigMode = 'remote' | 'manual' | 'hardcoded';
 
-interface SDKConfig {
+export interface SDKConfig {
   timeout?: number;
-  useRemoteConfig?: boolean;
+  configMode?: ConfigMode;
+  configServiceUrl?: string;
   customIndexerUrl?: string;
+  manualIndexers?: {
+    mainnet?: string[];
+    testnet?: string[];
+  };
+  manualRelays?: string;
   enableNostr?: boolean;
   nostrRelays?: string[];
   enableCache?: boolean;
@@ -34,8 +39,8 @@ interface SDKConfig {
 export class AngorHubSDK {
   private network: 'mainnet' | 'testnet';
   private config: Required<SDKConfig>;
-  private indexers: Indexer[] = [];
-  private healthyIndexers: Indexer[] = [];
+  private indexers: IndexerService[] = [];
+  private healthyIndexers: IndexerService[] = [];
   private nostrService?: NostrService;
   private cache = new Map<string, CacheEntry<any>>();
   private pendingRequests = new Map<string, Promise<any>>();
@@ -45,16 +50,6 @@ export class AngorHubSDK {
   private requestQueue: Array<() => Promise<any>> = [];
   private activeRequests = 0;
 
-  private networks = {
-    mainnet: [
-      { url: 'https://fulcrum.angor.online/', isPrimary: true, priority: 1 },
-      { url: 'https://electrs.angor.online/', isPrimary: false, priority: 2 },
-    ],
-    testnet: [
-      { url: 'https://signet.angor.online/', isPrimary: true, priority: 1 }
-    ]
-  };
-
   constructor(network: 'mainnet' | 'testnet' = 'mainnet', config: SDKConfig = {}) {
     this.network = network;
     
@@ -62,8 +57,11 @@ export class AngorHubSDK {
     
     this.config = {
       timeout: config.timeout || 8000,
-      useRemoteConfig: config.useRemoteConfig !== false,
+      configMode: config.configMode || 'remote',
+      configServiceUrl: config.configServiceUrl || 'https://angorhub.github.io/lists',
       customIndexerUrl: config.customIndexerUrl || '',
+      manualIndexers: config.manualIndexers || {},
+      manualRelays: config.manualRelays || '',
       enableNostr: config.enableNostr !== false,
       nostrRelays: config.nostrRelays?.length ? config.nostrRelays : defaultRelays,
       enableCache: config.enableCache !== false,
@@ -75,9 +73,95 @@ export class AngorHubSDK {
       concurrentRequests: config.concurrentRequests || 10
     };
 
-    this.initializeIndexers();
-    this.initializeNostrService();
+    this.initialize();
+  }
+
+  private async initialize(): Promise<void> {
+    await this.initializeIndexers();
+    await this.initializeNostrService();
     this.startHealthChecks();
+  }
+
+  private async fetchRelayConfig(): Promise<RelayConfig | null> {
+    try {
+      const response = await axios.get(`${this.config.configServiceUrl}/relays.json`, {
+        timeout: this.config.timeout
+      });
+      return response.data;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  private async fetchIndexerConfig(): Promise<IndexerConfig | null> {
+    try {
+      const response = await axios.get(`${this.config.configServiceUrl}/indexers.json`, {
+        timeout: this.config.timeout
+      });
+      return response.data;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  private async getConfiguredNostrRelays(network: 'mainnet' | 'testnet'): Promise<string[]> {
+    switch (this.config.configMode) {
+      case 'remote':
+        const relayConfig = await this.fetchRelayConfig();
+        if (relayConfig && relayConfig[network]) {
+          return relayConfig[network];
+        }
+        return this.getDefaultNostrRelays(network);
+      
+      case 'manual':
+        if (this.config.manualRelays) {
+          return this.config.manualRelays.split(',').map(relay => relay.trim());
+        }
+        return this.getDefaultNostrRelays(network);
+      
+      case 'hardcoded':
+      default:
+        return this.getDefaultNostrRelays(network);
+    }
+  }
+
+  private async getConfiguredIndexers(network: 'mainnet' | 'testnet'): Promise<IndexerService[]> {
+    switch (this.config.configMode) {
+      case 'remote':
+        const indexerConfig = await this.fetchIndexerConfig();
+        if (indexerConfig && indexerConfig[network]) {
+          return indexerConfig[network];
+        }
+        return this.getDefaultIndexers(network);
+      
+      case 'manual':
+        if (this.config.manualIndexers && this.config.manualIndexers[network]) {
+          return this.config.manualIndexers[network]!.map((url, index) => ({
+            url: url.endsWith('/') ? url : url + '/',
+            isPrimary: index === 0
+          }));
+        }
+        return this.getDefaultIndexers(network);
+      
+      case 'hardcoded':
+      default:
+        return this.getDefaultIndexers(network);
+    }
+  }
+
+  private getDefaultIndexers(network: 'mainnet' | 'testnet'): IndexerService[] {
+    if (network === 'testnet') {
+      return [
+        { url: 'https://test.indexer.angor.io/', isPrimary: true },
+        { url: 'https://signet.angor.online/', isPrimary: false }
+      ];
+    }
+    
+    return [
+      { url: 'https://indexer.angor.io/', isPrimary: false },
+      { url: 'https://fulcrum.angor.online/', isPrimary: true },
+      { url: 'https://electrs.angor.online/', isPrimary: false }
+    ];
   }
 
   private getDefaultNostrRelays(network: 'mainnet' | 'testnet'): string[] {
@@ -100,11 +184,11 @@ export class AngorHubSDK {
     ];
   }
 
-  private initializeIndexers(): void {
+  private async initializeIndexers(): Promise<void> {
     if (this.config.customIndexerUrl) {
-      this.indexers = [{ url: this.config.customIndexerUrl, isPrimary: true, priority: 1 }];
+      this.indexers = [{ url: this.config.customIndexerUrl, isPrimary: true }];
     } else {
-      this.indexers = [...this.networks[this.network]];
+      this.indexers = await this.getConfiguredIndexers(this.network);
     }
 
     this.healthyIndexers = [...this.indexers];
@@ -140,9 +224,10 @@ export class AngorHubSDK {
     });
   }
 
-  private initializeNostrService(): void {
+  private async initializeNostrService(): Promise<void> {
     if (this.config.enableNostr) {
-      this.nostrService = new NostrService(this.config.nostrRelays);
+      const relays = await this.getConfiguredNostrRelays(this.network);
+      this.nostrService = new NostrService(relays);
     }
   }
 
@@ -179,7 +264,7 @@ export class AngorHubSDK {
     });
   }
 
-  private async checkIndexerHealth(indexer: Indexer): Promise<IndexerHealth> {
+  private async checkIndexerHealth(indexer: IndexerService): Promise<IndexerHealth> {
     const startTime = Date.now();
     const health: IndexerHealth = {
       url: indexer.url,
@@ -225,8 +310,8 @@ export class AngorHubSDK {
         const healthA = this.healthStatus.get(a.url);
         const healthB = this.healthStatus.get(b.url);
         
-        if (a.priority !== b.priority) {
-          return a.priority - b.priority;
+        if (a.isPrimary !== b.isPrimary) {
+          return a.isPrimary ? -1 : 1;
         }
         
         return (healthA?.responseTime || Infinity) - (healthB?.responseTime || Infinity);
@@ -487,6 +572,49 @@ export class AngorHubSDK {
       activeRequests: this.activeRequests,
       queuedRequests: this.requestQueue.length,
       timestamp: new Date().toISOString()
+    };
+  }
+
+  async updateConfiguration(configMode: ConfigMode, options?: {
+    configServiceUrl?: string;
+    manualIndexers?: { mainnet?: string[]; testnet?: string[] };
+    manualRelays?: string;
+  }): Promise<void> {
+    this.config.configMode = configMode;
+    
+    if (options?.configServiceUrl) {
+      this.config.configServiceUrl = options.configServiceUrl;
+    }
+    
+    if (options?.manualIndexers) {
+      this.config.manualIndexers = options.manualIndexers;
+    }
+    
+    if (options?.manualRelays) {
+      this.config.manualRelays = options.manualRelays;
+    }
+
+    await this.initialize();
+  }
+
+  async refreshConfiguration(): Promise<void> {
+    this.clearCache();
+    await this.initialize();
+  }
+
+  getConfigurationInfo(): {
+    mode: ConfigMode;
+    serviceUrl: string;
+    indexers: IndexerService[];
+    relaysCount: number;
+    network: string;
+  } {
+    return {
+      mode: this.config.configMode,
+      serviceUrl: this.config.configServiceUrl,
+      indexers: this.indexers,
+      relaysCount: this.config.nostrRelays.length,
+      network: this.network
     };
   }
 

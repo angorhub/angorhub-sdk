@@ -1,8 +1,15 @@
-import type { AngorProject, AngorProjectDetails, AngorProjectStats, AngorInvestment, IndexerHealth } from './interfaces';
-interface SDKConfig {
+import type { AngorProject, AngorProjectDetails, AngorProjectStats, AngorInvestment, IndexerHealth, IndexerService } from './interfaces';
+export type ConfigMode = 'remote' | 'manual' | 'hardcoded';
+export interface SDKConfig {
     timeout?: number;
-    useRemoteConfig?: boolean;
+    configMode?: ConfigMode;
+    configServiceUrl?: string;
     customIndexerUrl?: string;
+    manualIndexers?: {
+        mainnet?: string[];
+        testnet?: string[];
+    };
+    manualRelays?: string;
     enableNostr?: boolean;
     nostrRelays?: string[];
     enableCache?: boolean;
@@ -26,8 +33,13 @@ export declare class AngorHubSDK {
     private axiosInstances;
     private requestQueue;
     private activeRequests;
-    private networks;
     constructor(network?: 'mainnet' | 'testnet', config?: SDKConfig);
+    private initialize;
+    private fetchRelayConfig;
+    private fetchIndexerConfig;
+    private getConfiguredNostrRelays;
+    private getConfiguredIndexers;
+    private getDefaultIndexers;
     private getDefaultNostrRelays;
     private initializeIndexers;
     private initializeAxiosInstances;
@@ -72,6 +84,21 @@ export declare class AngorHubSDK {
         queuedRequests: number;
         timestamp: string;
     };
+    updateConfiguration(configMode: ConfigMode, options?: {
+        configServiceUrl?: string;
+        manualIndexers?: {
+            mainnet?: string[];
+            testnet?: string[];
+        };
+        manualRelays?: string;
+    }): Promise<void>;
+    refreshConfiguration(): Promise<void>;
+    getConfigurationInfo(): {
+        mode: ConfigMode;
+        serviceUrl: string;
+        indexers: IndexerService[];
+        relaysCount: number;
+        network: string;
+    };
     destroy(): void;
 }
-export {};
