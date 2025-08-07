@@ -20689,6 +20689,11 @@ var AngorHubSDK = (function (exports, axios) {
 	        };
 	    }
 	    async enrichProjectsWithNostrData(projects) {
+	        // Add safety check for projects parameter
+	        if (!Array.isArray(projects)) {
+	            console.warn('⚠️ enrichProjectsWithNostrData: projects is not an array:', typeof projects, projects);
+	            return [];
+	        }
 	        if (projects.length === 0)
 	            return projects;
 	        console.log(`🌐 Enriching ${projects.length} projects with Nostr data...`);
@@ -20788,6 +20793,7 @@ var AngorHubSDK = (function (exports, axios) {
 
 	class AngorHubSDK {
 	    constructor(network = 'mainnet', config = {}) {
+	        var _a;
 	        this.indexers = [];
 	        this.healthyIndexers = [];
 	        this.cache = new Map();
@@ -20802,17 +20808,18 @@ var AngorHubSDK = (function (exports, axios) {
 	                { url: 'https://electrs.angor.online/', isPrimary: false, priority: 2 },
 	            ],
 	            testnet: [
-	                { url: 'https://test.indexer.angor.io/', isPrimary: true, priority: 1 },
-	                { url: 'https://signet.angor.online/', isPrimary: false, priority: 2 }
+	                { url: 'https://signet.angor.online/', isPrimary: true, priority: 1 }
 	            ]
 	        };
 	        this.network = network;
+	        // Get default Nostr relays for the network if none provided
+	        const defaultRelays = this.getDefaultNostrRelays(network);
 	        this.config = {
 	            timeout: config.timeout || 8000,
 	            useRemoteConfig: config.useRemoteConfig !== false,
 	            customIndexerUrl: config.customIndexerUrl || '',
 	            enableNostr: config.enableNostr !== false,
-	            nostrRelays: config.nostrRelays || [],
+	            nostrRelays: ((_a = config.nostrRelays) === null || _a === void 0 ? void 0 : _a.length) ? config.nostrRelays : defaultRelays,
 	            enableCache: config.enableCache !== false,
 	            cacheTtl: config.cacheTtl || 300000, // 5 minutes
 	            maxRetries: config.maxRetries || 3,
@@ -20821,9 +20828,29 @@ var AngorHubSDK = (function (exports, axios) {
 	            enableCompression: config.enableCompression !== false,
 	            concurrentRequests: config.concurrentRequests || 10
 	        };
+	        console.log(`🔗 Initializing ${network} SDK with Nostr relays:`, this.config.nostrRelays);
 	        this.initializeIndexers();
 	        this.initializeNostrService();
 	        this.startHealthChecks();
+	    }
+	    getDefaultNostrRelays(network) {
+	        if (network === 'testnet') {
+	            return [
+	                "wss://relay.damus.io",
+	                "wss://relay.angor.io",
+	                "wss://nostr-relay.wlvs.space",
+	                "wss://relay.nostr.info",
+	                "wss://nos.lol",
+	                "wss://relay.current.fyi",
+	                "wss://nostr.wine",
+	                "wss://relay.orangepill.dev"
+	            ];
+	        }
+	        // Default mainnet relays
+	        return [
+	            "wss://relay.damus.io",
+	            "wss://relay.angor.io"
+	        ];
 	    }
 	    initializeIndexers() {
 	        if (this.config.customIndexerUrl) {
@@ -21043,11 +21070,37 @@ var AngorHubSDK = (function (exports, axios) {
 	        }
 	    }
 	    async getProjects(limit = 10, offset = 0, useCache = true) {
-	        const projects = await this.makeRequestWithRetry('projects', { limit, offset }, { useCache });
-	        if (this.nostrService && projects.length > 0) {
-	            return await this.nostrService.enrichProjectsWithNostrData(projects);
+	        var _a;
+	        try {
+	            const response = await this.makeRequestWithRetry('projects', { limit, offset }, { useCache });
+	            // Add safety check for response structure
+	            let projects;
+	            if (Array.isArray(response)) {
+	                projects = response;
+	            }
+	            else if (response && Array.isArray(response.data)) {
+	                projects = response.data;
+	            }
+	            else if (response && Array.isArray(response.projects)) {
+	                projects = response.projects;
+	            }
+	            else {
+	                console.warn('⚠️ API response is not in expected format:', response);
+	                throw new Error(`API returned unexpected format. Expected array of projects, got: ${typeof response}`);
+	            }
+	            if (this.nostrService && projects.length > 0) {
+	                return await this.nostrService.enrichProjectsWithNostrData(projects);
+	            }
+	            return projects;
 	        }
-	        return projects;
+	        catch (error) {
+	            console.error('❌ Error fetching projects:', error);
+	            // If it's a 404 error, provide more helpful message
+	            if (((_a = error.response) === null || _a === void 0 ? void 0 : _a.status) === 404) {
+	                throw new Error(`Projects endpoint not found (404). This may indicate the ${this.network} indexer is not available or the API endpoint has changed.`);
+	            }
+	            throw error;
+	        }
 	    }
 	    async getProject(projectId, useCache = true) {
 	        const project = await this.makeRequestWithRetry(`projects/${projectId}`, {}, { useCache });

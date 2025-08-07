@@ -248,6 +248,11 @@ class NostrService {
         };
     }
     async enrichProjectsWithNostrData(projects) {
+        // Add safety check for projects parameter
+        if (!Array.isArray(projects)) {
+            console.warn('⚠️ enrichProjectsWithNostrData: projects is not an array:', typeof projects, projects);
+            return [];
+        }
         if (projects.length === 0)
             return projects;
         console.log(`🌐 Enriching ${projects.length} projects with Nostr data...`);

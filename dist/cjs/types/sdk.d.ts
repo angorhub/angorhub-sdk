@@ -28,6 +28,7 @@ export declare class AngorHubSDK {
     private activeRequests;
     private networks;
     constructor(network?: 'mainnet' | 'testnet', config?: SDKConfig);
+    private getDefaultNostrRelays;
     private initializeIndexers;
     private initializeAxiosInstances;
     private initializeNostrService;
